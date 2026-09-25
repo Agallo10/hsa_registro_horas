@@ -18,16 +18,16 @@ Body: `{ currentPassword, newPassword }`
 ## Personas
 
 ### `GET /personas`
-Respuesta: `PersonaDto[]` (id, nombre, documento, correo, activo)
+Respuesta: `PersonaDto[]` (id, nombre, documento, correo, area, activo)
 
 ### `GET /personas/:id`
 Respuesta: `PersonaDto`
 
 ### `POST /personas`
-Body: `{ nombre, documento, correo? }` → `PersonaDto`
+Body: `{ nombre, documento, correo?, area? }` → `PersonaDto`
 
 ### `PATCH /personas/:id`
-Body parcial: `{ nombre?, documento?, correo?, activo? }` → `PersonaDto`
+Body parcial: `{ nombre?, documento?, correo?, area?, activo? }` → `PersonaDto`
 
 ## Registros de horas
 
@@ -47,7 +47,30 @@ Body parcial: `{ horaInicio?, horaFin?, observaciones? }`
 ## Reportes
 
 ### `GET /reportes/mensual?year=&month=`
-Respuesta: `{ year, month, filas: [{ personaId, nombre, documento, correo, activo, horasTotales, diasRegistrados }] }`
+Respuesta:
+```json
+{
+  "year": 2026,
+  "month": 9,
+  "filas": [
+    {
+      "personaId": "...",
+      "nombre": "...",
+      "documento": "...",
+      "correo": "...",
+      "area": "...",
+      "activo": true,
+      "diasRegistrados": 5,
+      "recargoOrdinarioDiurno": 4,
+      "recargoOrdinarioNocturno": 1,
+      "recargoFestivoDiurno": 4,
+      "recargoFestivoNocturno": 0,
+      "horasExtraordinarias": 5,
+      "totalHoras": 14
+    }
+  ]
+}
+```
 
 ### `GET /reportes/detalle?year=&month=`
-Respuesta: `{ year, month, filas: [{ personaId, nombre, documento, fecha, horaInicio, horaFin, horasTotales, observaciones }] }`
+Respuesta: `{ year, month, filas: [{ personaId, nombre, documento, fecha, horaInicio, horaFin, observaciones, recargoOrdinarioDiurno, recargoOrdinarioNocturno, recargoFestivoDiurno, recargoFestivoNocturno, horasExtraordinarias }] }`

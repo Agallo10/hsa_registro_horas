@@ -13,6 +13,7 @@ export interface PersonaDto {
   nombre: string;
   documento: string;
   correo: string | null;
+  area: string | null;
   activo: boolean;
 }
 
@@ -21,6 +22,7 @@ export const toPersonaDto = (p: Persona): PersonaDto => ({
   nombre: p.nombre,
   documento: p.documento,
   correo: p.correo,
+  area: p.area,
   activo: p.activo,
 });
 
@@ -45,6 +47,7 @@ export class PersonasService {
       nombre: dto.nombre,
       documento: dto.documento,
       correo: dto.correo ?? null,
+      area: dto.area ?? null,
       activo: true,
     });
     return this.personasRepository.save(persona);
@@ -61,6 +64,7 @@ export class PersonasService {
       persona.documento = dto.documento;
     }
     if (dto.correo !== undefined) persona.correo = dto.correo;
+    if (dto.area !== undefined) persona.area = dto.area;
     if (dto.activo !== undefined) persona.activo = dto.activo;
     return this.personasRepository.save(persona);
   }

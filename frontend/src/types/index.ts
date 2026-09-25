@@ -13,6 +13,7 @@ export interface Persona {
   nombre: string;
   documento: string;
   correo: string | null;
+  area: string | null;
   activo: boolean;
 }
 
@@ -37,9 +38,15 @@ export interface ResumenFila {
   nombre: string;
   documento: string;
   correo: string | null;
+  area: string | null;
   activo: boolean;
-  horasTotales: number;
   diasRegistrados: number;
+  recargoOrdinarioDiurno: number;
+  recargoOrdinarioNocturno: number;
+  recargoFestivoDiurno: number;
+  recargoFestivoNocturno: number;
+  horasExtraordinarias: number;
+  totalHoras: number;
 }
 
 export interface DetalleFila {
@@ -49,6 +56,10 @@ export interface DetalleFila {
   fecha: string;
   horaInicio: string;
   horaFin: string;
-  horasTotales: number;
   observaciones: string | null;
+  recargoOrdinarioDiurno: number;
+  recargoOrdinarioNocturno: number;
+  recargoFestivoDiurno: number;
+  recargoFestivoNocturno: number;
+  horasExtraordinarias: number;
 }

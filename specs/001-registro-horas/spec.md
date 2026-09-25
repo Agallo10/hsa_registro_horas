@@ -90,6 +90,11 @@ Puede exportar a Excel un resumen (una fila por persona) o un detalle día por d
 - **FR-006**: `horas_totales` calculado en el backend (decimal).
 - **FR-007**: Reporte mensual (resumen por persona + detalle diario).
 - **FR-008**: Exportación a Excel (resumen y detalle).
+- **FR-009**: Clasificación automática de horas para el reporte: domingo/festivo de
+  Colombia → recargo festivo (diurno/nocturno); sábado → recargo ordinario
+  (diurno/nocturno); lunes-viernes después de las 16:00 → horas extraordinarias; el resto
+  (jornada ordinaria) se excluye.
+- **FR-010**: Nocturno definido de 21:00 a 06:00; diurno de 06:00 a 21:00.
 
 ### Key Entities
 

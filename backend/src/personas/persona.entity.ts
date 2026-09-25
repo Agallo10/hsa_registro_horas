@@ -20,6 +20,9 @@ export class Persona {
   @Column({ name: 'correo', type: 'varchar', length: 160, nullable: true, unique: true })
   correo: string | null;
 
+  @Column({ name: 'area', type: 'varchar', length: 120, nullable: true })
+  area: string | null;
+
   @Column({ name: 'activo', type: 'boolean', default: true })
   activo: boolean;
 

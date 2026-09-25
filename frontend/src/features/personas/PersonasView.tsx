@@ -24,6 +24,7 @@ interface FormState {
   nombre: string;
   documento: string;
   correo: string;
+  area: string;
 }
 
 const emptyForm: FormState = {
@@ -31,6 +32,7 @@ const emptyForm: FormState = {
   nombre: '',
   documento: '',
   correo: '',
+  area: '',
 };
 
 export function PersonasView() {
@@ -61,6 +63,7 @@ export function PersonasView() {
       nombre: p.nombre,
       documento: p.documento,
       correo: p.correo ?? '',
+      area: p.area ?? '',
     });
     setError(null);
     setOpen(true);
@@ -74,6 +77,7 @@ export function PersonasView() {
         nombre: form.nombre,
         documento: form.documento,
         correo: form.correo || undefined,
+        area: form.area || undefined,
       };
       if (form.id) {
         await personasApi.update(form.id, payload);
@@ -112,6 +116,7 @@ export function PersonasView() {
             <Table.Tr>
               <Table.Th>Nombre</Table.Th>
               <Table.Th>Documento</Table.Th>
+              <Table.Th>Área</Table.Th>
               <Table.Th>Correo</Table.Th>
               <Table.Th>Estado</Table.Th>
               <Table.Th style={{ textAlign: 'right' }}>Acciones</Table.Th>
@@ -126,6 +131,7 @@ export function PersonasView() {
               >
                 <Table.Td fw={500}>{p.nombre}</Table.Td>
                 <Table.Td>{p.documento}</Table.Td>
+                <Table.Td>{p.area ?? '—'}</Table.Td>
                 <Table.Td>{p.correo ?? '—'}</Table.Td>
                 <Table.Td>
                   {p.activo ? (
@@ -157,7 +163,7 @@ export function PersonasView() {
             ))}
             {personas.length === 0 && (
               <Table.Tr>
-                <Table.Td colSpan={5}>
+                <Table.Td colSpan={6}>
                   <Text c="dimmed" ta="center">
                     No hay personas registradas.
                   </Text>
@@ -195,6 +201,13 @@ export function PersonasView() {
             value={form.correo}
             onChange={(e) =>
               setForm((f) => ({ ...f, correo: e.currentTarget.value }))
+            }
+          />
+          <TextInput
+            label="Área (opcional)"
+            value={form.area}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, area: e.currentTarget.value }))
             }
           />
           <Group justify="flex-end">

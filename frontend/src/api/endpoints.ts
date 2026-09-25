@@ -38,6 +38,7 @@ export const personasApi = {
     nombre: string;
     documento: string;
     correo?: string;
+    area?: string;
   }): Promise<Persona> {
     const { data } = await api.post<Persona>('/personas', input);
     return data;

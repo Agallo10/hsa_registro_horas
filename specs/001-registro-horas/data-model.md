@@ -20,6 +20,7 @@
 | nombre | varchar(120) | not null |
 | documento | varchar(30) | unique, not null |
 | correo | varchar(160) | null, unique |
+| area | varchar(120) | null |
 | activo | boolean | default true |
 | created_at / updated_at | timestamptz | |
 
@@ -49,3 +50,16 @@
 - No se permiten bloques solapados para la misma persona y fecha.
 - **Máximo 4 personas distintas** con horas en un mismo día (validado al crear).
 - El cliente no envía `horas_totales`; se calcula y descarta en el backend.
+
+## Clasificación de horas (reporte)
+
+Cada bloque se clasifica automáticamente al generar el reporte mensual:
+
+| Día | Regla | Columnas afectadas |
+|---|---|---|
+| Domingo / festivo de Colombia | todo el bloque | Recargos festivos (diurno 06:00–21:00 / nocturno 21:00–06:00) |
+| Sábado | todo el bloque | Recargos ordinarios (diurno/nocturno) |
+| Lunes a viernes | solo horas **después de las 16:00** | Horas extraordinarias |
+| Lunes a viernes | horas antes de las 16:00 | Excluidas del reporte |
+
+Los festivos de Colombia se calculan automáticamente (fijos, Emiliani y Semana Santa).

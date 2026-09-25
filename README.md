@@ -16,10 +16,22 @@ persona (facturador/a) y genere un reporte mensual consolidado, exportable a Exc
 - El supervisor gestiona **personas** (facturadores) y, al seleccionar una, registra sus
   horas en un calendario mensual.
 - Las personas **no inician sesión**; son entidades gestionadas (nombre, documento único,
-  correo opcional). Pueden desactivarse conservando su histórico.
+  correo y área opcionales). Pueden desactivarse conservando su histórico.
 - Un día puede tener como máximo **4 personas distintas** con horas registradas.
-- Una pestaña de **reporte mensual** muestra el total por persona y permite exportar a Excel
-  (resumen y detalle).
+- El **reporte mensual** clasifica automáticamente las horas y se exporta a Excel en el
+  formato "horas extras - recargos".
+
+## Clasificación de horas (reporte)
+
+| Día | Regla | Columnas |
+|---|---|---|
+| Domingo / festivo de Colombia | todo el bloque | Recargos festivos (diurno / nocturno) |
+| Sábado | todo el bloque | Recargos ordinarios (diurno / nocturno) |
+| Lunes a viernes | solo después de las 16:00 | Horas extraordinarias |
+| Lunes a viernes | antes de las 16:00 | Excluido del reporte |
+
+- Nocturno: 21:00–06:00 · Diurno: 06:00–21:00.
+- Los festivos de Colombia se calculan automáticamente (fijos, Emiliani y Semana Santa).
 
 ## Estructura
 
@@ -94,7 +106,7 @@ Las migraciones crean las tablas `usuario`, `persona` y `registro_hora`, el enum
 - **`usuario`**: cuenta de login del supervisor. id (uuid), nombre, correo (único),
   password_hash (bcrypt), rol (`administrador`), activo, timestamps.
 - **`persona`**: facturador/a (no inicia sesión). id (uuid), nombre, documento (único),
-  correo (opcional), activo, timestamps.
+  correo (opcional), área (opcional), activo, timestamps.
 - **`registro_hora`**: un bloque de horas. id (uuid), persona_id (FK), fecha (date),
   hora_inicio (time), hora_fin (time), horas_totales (numeric(4,2), calculado), observaciones,
   timestamps. Un día puede tener varios bloques (turno partido).

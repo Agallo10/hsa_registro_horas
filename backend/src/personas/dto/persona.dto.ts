@@ -18,6 +18,11 @@ export class CreatePersonaDto {
   @IsOptional()
   @IsEmail()
   correo?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  area?: string;
 }
 
 export class UpdatePersonaDto {
@@ -34,6 +39,11 @@ export class UpdatePersonaDto {
   @IsOptional()
   @IsEmail()
   correo?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  area?: string;
 
   @IsOptional()
   @IsBoolean()
