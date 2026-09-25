@@ -9,6 +9,9 @@ import {
 const TIME_REGEX = /^([01]\d|2[0-3]):([0-5]\d)$/;
 
 export class CreateRegistroDto {
+  @IsUUID()
+  personaId: string;
+
   @IsDateString()
   fecha: string;
 
@@ -21,10 +24,6 @@ export class CreateRegistroDto {
   @IsOptional()
   @IsString()
   observaciones?: string;
-
-  @IsOptional()
-  @IsUUID()
-  usuarioId?: string;
 }
 
 export class UpdateRegistroDto {
@@ -43,14 +42,14 @@ export class UpdateRegistroDto {
 
 export class QueryRegistroDto {
   @IsOptional()
+  @IsUUID()
+  personaId?: string;
+
+  @IsOptional()
   @IsDateString()
   fechaDesde?: string;
 
   @IsOptional()
   @IsDateString()
   fechaHasta?: string;
-
-  @IsOptional()
-  @IsUUID()
-  usuarioId?: string;
 }

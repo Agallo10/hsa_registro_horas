@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
+  Badge,
   Button,
   Group,
   Paper,
@@ -74,7 +75,8 @@ export function ReporteView() {
     const wb = new ExcelJS.Workbook();
     const ws = wb.addWorksheet('Resumen');
     ws.columns = [
-      { header: 'Facturador', key: 'nombre', width: 30 },
+      { header: 'Persona', key: 'nombre', width: 30 },
+      { header: 'Documento', key: 'documento', width: 18 },
       { header: 'Correo', key: 'correo', width: 30 },
       { header: 'Días registrados', key: 'dias', width: 18 },
       { header: 'Total horas', key: 'horas', width: 14 },
@@ -82,7 +84,8 @@ export function ReporteView() {
     for (const f of filas) {
       ws.addRow({
         nombre: f.nombre,
-        correo: f.correo,
+        documento: f.documento,
+        correo: f.correo ?? '',
         dias: f.diasRegistrados,
         horas: f.horasTotales,
       });
@@ -96,7 +99,8 @@ export function ReporteView() {
     const wb = new ExcelJS.Workbook();
     const ws = wb.addWorksheet('Detalle');
     ws.columns = [
-      { header: 'Facturador', key: 'nombre', width: 30 },
+      { header: 'Persona', key: 'nombre', width: 30 },
+      { header: 'Documento', key: 'documento', width: 18 },
       { header: 'Fecha', key: 'fecha', width: 14 },
       { header: 'Inicio', key: 'inicio', width: 10 },
       { header: 'Fin', key: 'fin', width: 10 },
@@ -106,6 +110,7 @@ export function ReporteView() {
     for (const d of detalle as DetalleFila[]) {
       ws.addRow({
         nombre: d.nombre,
+        documento: d.documento,
         fecha: d.fecha,
         inicio: d.horaInicio,
         fin: d.horaFin,
@@ -154,28 +159,36 @@ export function ReporteView() {
         <Table striped highlightOnHover>
           <Table.Thead>
             <Table.Tr>
-              <Table.Th>Facturador</Table.Th>
-              <Table.Th>Correo</Table.Th>
+              <Table.Th>Persona</Table.Th>
+              <Table.Th>Documento</Table.Th>
               <Table.Th>Días</Table.Th>
               <Table.Th style={{ textAlign: 'right' }}>Total horas</Table.Th>
+              <Table.Th>Estado</Table.Th>
             </Table.Tr>
           </Table.Thead>
           <Table.Tbody>
             {filas.map((f) => (
-              <Table.Tr key={f.usuarioId}>
-                <Table.Td>{f.nombre}</Table.Td>
-                <Table.Td>{f.correo}</Table.Td>
+              <Table.Tr key={f.personaId}>
+                <Table.Td fw={500}>{f.nombre}</Table.Td>
+                <Table.Td>{f.documento}</Table.Td>
                 <Table.Td>{f.diasRegistrados}</Table.Td>
                 <Table.Td style={{ textAlign: 'right' }}>
                   {f.horasTotales}
+                </Table.Td>
+                <Table.Td>
+                  {f.activo ? (
+                    <Badge color="teal">Activo</Badge>
+                  ) : (
+                    <Badge color="gray">Inactivo</Badge>
+                  )}
                 </Table.Td>
               </Table.Tr>
             ))}
             {filas.length === 0 && (
               <Table.Tr>
-                <Table.Td colSpan={4}>
+                <Table.Td colSpan={5}>
                   <Text c="dimmed" ta="center">
-                    Sin facturadores registrados.
+                    Sin personas registradas.
                   </Text>
                 </Table.Td>
               </Table.Tr>

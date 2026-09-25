@@ -4,10 +4,10 @@
 
 ## Summary
 
-Sistema web para que los facturadores de un hospital registren sus horas diarias y el
-coordinador genere un reporte mensual exportable. Backend NestJS + TypeORM + PostgreSQL,
-frontend React + Mantine, autenticación JWT propia con roles `facturador`/`administrador`,
-despliegue en IIS (iisnode + ServeStatic).
+Sistema web para que el supervisor de un hospital registre las horas diarias de las
+personas (facturadores) y genere un reporte mensual exportable. Backend NestJS + TypeORM
++ PostgreSQL, frontend React + Mantine, autenticación JWT de un único usuario
+(`administrador`), despliegue en IIS (iisnode + ServeStatic).
 
 ## Technical Context
 
@@ -35,9 +35,9 @@ hsa_registro_horas/
 ├── .specify/                     # Spec Kit
 ├── specs/001-registro-horas/     # spec, plan, research, data-model, contracts
 ├── backend/                      # NestJS + TypeORM (ESM)
-│   └── src/{auth,users,registros,reportes,common,data-source.ts,migrations}
+│   └── src/{auth,users,personas,registros,reportes,common,data-source.ts,migrations}
 └── frontend/                     # React + Vite + Mantine
-    └── src/{api,auth,features/*,components,theme,types}
+    └── src/{api,auth,features/{personas,calendario,registro,reporte},components,theme,types}
 ```
 
 ## Execution Order

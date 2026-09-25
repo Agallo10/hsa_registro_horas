@@ -8,9 +8,17 @@ export interface Usuario {
   activo: boolean;
 }
 
+export interface Persona {
+  id: string;
+  nombre: string;
+  documento: string;
+  correo: string | null;
+  activo: boolean;
+}
+
 export interface Registro {
   id: string;
-  usuarioId: string;
+  personaId: string;
   fecha: string;
   horaInicio: string;
   horaFin: string;
@@ -25,16 +33,19 @@ export interface LoginResponse {
 }
 
 export interface ResumenFila {
-  usuarioId: string;
+  personaId: string;
   nombre: string;
-  correo: string;
+  documento: string;
+  correo: string | null;
+  activo: boolean;
   horasTotales: number;
   diasRegistrados: number;
 }
 
 export interface DetalleFila {
-  usuarioId: string;
+  personaId: string;
   nombre: string;
+  documento: string;
   fecha: string;
   horaInicio: string;
   horaFin: string;

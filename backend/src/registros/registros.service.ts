@@ -1,6 +1,5 @@
 import {
   ConflictException,
-  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -17,12 +16,12 @@ import {
   QueryRegistroDto,
   UpdateRegistroDto,
 } from './dto/registro.dto.js';
-import { AuthUser } from '../common/auth-user.interface.js';
-import { Role } from '../common/role.enum.js';
+
+const MAX_PERSONAS_POR_DIA = 4;
 
 export interface RegistroDto {
   id: string;
-  usuarioId: string;
+  personaId: string;
   fecha: string;
   horaInicio: string;
   horaFin: string;
@@ -32,7 +31,7 @@ export interface RegistroDto {
 
 export const toRegistroDto = (r: RegistroHora): RegistroDto => ({
   id: r.id,
-  usuarioId: r.usuarioId,
+  personaId: r.personaId,
   fecha: r.fecha,
   horaInicio: r.horaInicio.slice(0, 5),
   horaFin: r.horaFin.slice(0, 5),
@@ -64,26 +63,21 @@ export class RegistrosService {
     private readonly registrosRepository: Repository<RegistroHora>,
   ) {}
 
-  async findAll(query: QueryRegistroDto, user: AuthUser): Promise<RegistroHora[]> {
+  async findAll(query: QueryRegistroDto): Promise<RegistroHora[]> {
     const where: Record<string, unknown> = {};
 
-    if (user.role === Role.Administrador && query.usuarioId) {
-      where.usuarioId = query.usuarioId;
-    } else {
-      where.usuarioId = user.userId;
+    if (query.personaId) {
+      where.personaId = query.personaId;
     }
 
     if (query.fechaDesde || query.fechaHasta) {
-      const fecha = (() => {
-        if (query.fechaDesde && query.fechaHasta) {
-          return Between(query.fechaDesde, query.fechaHasta);
-        }
-        if (query.fechaDesde) {
-          return MoreThanOrEqual(query.fechaDesde);
-        }
-        return LessThanOrEqual(query.fechaHasta!);
-      })();
-      where.fecha = fecha;
+      if (query.fechaDesde && query.fechaHasta) {
+        where.fecha = Between(query.fechaDesde, query.fechaHasta);
+      } else if (query.fechaDesde) {
+        where.fecha = MoreThanOrEqual(query.fechaDesde);
+      } else {
+        where.fecha = LessThanOrEqual(query.fechaHasta!);
+      }
     }
 
     return this.registrosRepository.find({
@@ -96,16 +90,12 @@ export class RegistrosService {
     return this.registrosRepository.findOne({ where: { id } });
   }
 
-  async create(dto: CreateRegistroDto, user: AuthUser): Promise<RegistroHora> {
-    const usuarioId =
-      user.role === Role.Administrador && dto.usuarioId
-        ? dto.usuarioId
-        : user.userId;
-
-    await this.assertNoOverlap(usuarioId, dto.fecha, dto.horaInicio, dto.horaFin);
+  async create(dto: CreateRegistroDto): Promise<RegistroHora> {
+    await this.assertNoOverlap(dto.personaId, dto.fecha, dto.horaInicio, dto.horaFin);
+    await this.assertMaxPersonasPorDia(dto.personaId, dto.fecha);
 
     const registro = this.registrosRepository.create({
-      usuarioId,
+      personaId: dto.personaId,
       fecha: dto.fecha,
       horaInicio: dto.horaInicio,
       horaFin: dto.horaFin,
@@ -115,23 +105,16 @@ export class RegistrosService {
     return this.registrosRepository.save(registro);
   }
 
-  async update(
-    id: string,
-    dto: UpdateRegistroDto,
-    user: AuthUser,
-  ): Promise<RegistroHora> {
+  async update(id: string, dto: UpdateRegistroDto): Promise<RegistroHora> {
     const registro = await this.findById(id);
     if (!registro) {
       throw new NotFoundException('Registro no encontrado');
-    }
-    if (user.role !== Role.Administrador && registro.usuarioId !== user.userId) {
-      throw new ForbiddenException('No puede modificar registros de otros');
     }
 
     const horaInicio = dto.horaInicio ?? registro.horaInicio;
     const horaFin = dto.horaFin ?? registro.horaFin;
 
-    await this.assertNoOverlap(registro.usuarioId, registro.fecha, horaInicio, horaFin, id);
+    await this.assertNoOverlap(registro.personaId, registro.fecha, horaInicio, horaFin, id);
 
     registro.horaInicio = horaInicio;
     registro.horaFin = horaFin;
@@ -142,19 +125,16 @@ export class RegistrosService {
     return this.registrosRepository.save(registro);
   }
 
-  async remove(id: string, user: AuthUser): Promise<void> {
+  async remove(id: string): Promise<void> {
     const registro = await this.findById(id);
     if (!registro) {
       throw new NotFoundException('Registro no encontrado');
-    }
-    if (user.role !== Role.Administrador && registro.usuarioId !== user.userId) {
-      throw new ForbiddenException('No puede eliminar registros de otros');
     }
     await this.registrosRepository.delete(id);
   }
 
   private async assertNoOverlap(
-    usuarioId: string,
+    personaId: string,
     fecha: string,
     horaInicio: string,
     horaFin: string,
@@ -167,7 +147,7 @@ export class RegistrosService {
     }
 
     const existing = await this.registrosRepository.find({
-      where: { usuarioId, fecha },
+      where: { personaId, fecha },
     });
 
     const conflicto = existing.some(
@@ -178,6 +158,23 @@ export class RegistrosService {
 
     if (conflicto) {
       throw new ConflictException('El horario se solapa con otro registro del día');
+    }
+  }
+
+  private async assertMaxPersonasPorDia(
+    personaId: string,
+    fecha: string,
+  ): Promise<void> {
+    const rows: Array<{ persona_id: string }> = await this.registrosRepository.manager.query(
+      `SELECT DISTINCT persona_id FROM registro_hora WHERE fecha = $1`,
+      [fecha],
+    );
+    const personas = new Set(rows.map((r) => r.persona_id));
+
+    if (personas.size >= MAX_PERSONAS_POR_DIA && !personas.has(personaId)) {
+      throw new ConflictException(
+        `Máximo ${MAX_PERSONAS_POR_DIA} personas por día`,
+      );
     }
   }
 }

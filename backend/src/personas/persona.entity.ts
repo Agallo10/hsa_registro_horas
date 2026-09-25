@@ -2,29 +2,23 @@ import {
   Column,
   CreateDateColumn,
   Entity,
-  Index,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { Role } from '../common/role.enum.js';
 
-@Entity('usuario')
-export class Usuario {
+@Entity('persona')
+export class Persona {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @Column({ name: 'nombre', type: 'varchar', length: 120 })
   nombre: string;
 
-  @Index({ unique: true })
-  @Column({ name: 'correo', type: 'varchar', length: 160, unique: true })
-  correo: string;
+  @Column({ name: 'documento', type: 'varchar', length: 30, unique: true })
+  documento: string;
 
-  @Column({ name: 'password_hash', type: 'varchar', length: 255 })
-  passwordHash: string;
-
-  @Column({ name: 'rol', type: 'enum', enum: Role, default: Role.Administrador })
-  rol: Role;
+  @Column({ name: 'correo', type: 'varchar', length: 160, nullable: true, unique: true })
+  correo: string | null;
 
   @Column({ name: 'activo', type: 'boolean', default: true })
   activo: boolean;

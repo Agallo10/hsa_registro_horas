@@ -4,125 +4,109 @@
 
 **Created**: 2026-09-22
 
-**Status**: Approved
+**Status**: Approved (v2 — modelo supervisor + personas)
 
-**Input**: Sistema de registro de horas para facturadores de un hospital. Cada facturador
-marca las horas trabajadas por día; al final de mes se genera un reporte consolidado.
+**Input**: Sistema de registro de horas para facturadores de un hospital. El supervisor
+(único usuario) gestiona personas y registra las horas trabajadas por cada una; al final
+de mes se genera un reporte consolidado.
 
 ## User Scenarios & Testing
 
-### User Story 1 - Login y acceso por roles (Priority: P1)
+### User Story 1 - Login del supervisor (Priority: P1)
 
-Un facturador o administrador inicia sesión con su correo y contraseña y es redirigido
-según su rol: el facturador a su calendario personal; el administrador puede además acceder
-al reporte y a la gestión de usuarios.
+El supervisor (administrador) inicia sesión con su correo y contraseña. Es el único rol
+que inicia sesión; los facturadores (personas) no acceden a la aplicación.
 
-**Why this priority**: Sin autenticación no existe aislamiento de datos ni se puede desplegar.
+**Why this priority**: Sin autenticación no existe la aplicación ni el aislamiento del sistema.
 
-**Independent Test**: Crear un usuario `facturador` y uno `administrador` vía seed, hacer login
-con ambos y verificar que cada uno ve solo lo que le corresponde.
+**Independent Test**: Hacer login con las credenciales del supervisor y entrar a la lista de personas.
 
 **Acceptance Scenarios**:
-1. **Given** credenciales válidas, **When** el usuario envía el formulario, **Then** recibe tokens y entra a su vista.
+1. **Given** credenciales válidas, **When** el supervisor envía el formulario, **Then** recibe tokens y entra a la lista de personas.
 2. **Given** credenciales inválidas, **When** envía el formulario, **Then** recibe un error 401 sin revelar qué campo falló.
-3. **Given** un facturador autenticado, **When** intenta acceder a `/reporte` o `/usuarios`, **Then** se le niega (403).
+3. **Given** una persona (facturador), **When** intenta iniciar sesión, **Then** no existe como usuario de login.
 
-### User Story 2 - Calendario mensual con indicadores (Priority: P1)
+### User Story 2 - Gestión de personas (Priority: P1)
 
-El facturador ve un calendario del mes actual. Los días con horas registradas muestran un
-indicador (total de horas diarias). Al hacer clic en un día se abre el modal de registro.
+Al entrar, el supervisor ve una lista de personas (nombre, documento, correo, estado).
+Puede crear, editar y desactivar personas. El documento es único.
 
-**Why this priority**: Es la pantalla principal de uso diario; determina la velocidad de marcado.
+**Why this priority**: Es la pantalla inicial y el punto de partida del flujo de registro.
 
-**Independent Test**: Con registros previos cargados para un usuario, verificar que los días
-correspondientes muestran el total correcto.
-
-**Acceptance Scenarios**:
-1. **Given** un facturador autenticado, **When** abre la app, **Then** ve el calendario del mes actual.
-2. **Given** un día con N bloques, **When** se renderiza, **Then** el día muestra la suma de horas (ej. `7.50`).
-3. **Given** un día sin registros, **When** se renderiza, **Then** no muestra indicador.
-
-### User Story 3 - Registro, edición y borrado de bloques de horas (Priority: P1)
-
-Al hacer clic en un día, el modal permite agregar uno o varios bloques (hora inicio/hora fin),
-con observación opcional. Valida que no haya solapamiento entre bloques del mismo día.
-Permite editar y eliminar registros existentes.
-
-**Why this priority**: Es la funcionalidad núcleo del sistema.
-
-**Independent Test**: Crear un bloque, editarlo, agregar un segundo bloque solapado (debe fallar)
-y eliminar un bloque; verificar persistencia.
+**Independent Test**: Crear, editar y desactivar una persona; verificar persistencia y unicidad del documento.
 
 **Acceptance Scenarios**:
-1. **Given** un bloque 08:00–12:00, **When** agrego 13:00–17:00, **Then** ambos se guardan (turno partido).
-2. **Given** un bloque 08:00–12:00, **When** agrego 11:00–14:00, **Then** se rechaza con error de solapamiento.
-3. **Given** un bloque con `hora_fin <= hora_inicio`, **When** se guarda, **Then** se rechaza.
-4. **Given** un bloque existente, **When** lo edito o elimino, **Then** se actualiza/elimina.
+1. **Given** el supervisor autenticado, **When** entra, **Then** ve la lista de personas.
+2. **Given** un documento ya existente, **When** crea/edita con ese documento, **Then** se rechaza.
+3. **Given** una persona desactivada, **When** se lista, **Then** aparece marcada como inactiva y no se puede seleccionar para registrar.
+
+### User Story 3 - Registro de horas por persona (Priority: P1)
+
+Al hacer clic en una persona, se habilita el calendario de esa persona. El supervisor
+selecciona un día y registra uno o varios bloques de horas (inicio/fin), con observación
+opcional. Un día puede tener como máximo **4 personas distintas** con horas registradas.
+
+**Why this priority**: Es el núcleo del sistema (registrar horas).
+
+**Independent Test**: Registrar horas para una persona, validar solapamiento y la regla de 4 personas/día.
+
+**Acceptance Scenarios**:
+1. **Given** una persona seleccionada, **When** hago clic en un día, **Then** se abre el modal con los bloques de esa persona.
+2. **Given** un bloque 08:00–12:00, **When** agrego 11:00–14:00, **Then** se rechaza por solapamiento.
+3. **Given** 4 personas distintas con horas el día X, **When** registro horas a una 5ª persona el día X, **Then** se rechaza con error "máximo 4 personas por día".
+4. **Given** una persona con horas, **When** edito o elimino un bloque, **Then** se actualiza/elimina.
 
 ### User Story 4 - Reporte mensual y exportación (Priority: P2)
 
-El administrador selecciona mes/año y ve una tabla con cada facturador y su total de horas.
-Puede exportar a Excel un resumen (una fila por facturador) o un detalle día por día.
+El supervisor selecciona mes/año y ve una tabla con cada persona y su total de horas.
+Puede exportar a Excel un resumen (una fila por persona) o un detalle día por día.
 
-**Why this priority**: Es el entregable de cierre de mes; puede construirse tras el núcleo.
+**Why this priority**: Entregable de cierre de mes; puede construirse tras el núcleo.
 
-**Independent Test**: Con datos de varios usuarios en un mes, verificar totales y generar el .xlsx.
-
-**Acceptance Scenarios**:
-1. **Given** un administrador, **When** selecciona mes/año, **Then** ve el total por facturador.
-2. **Given** un administrador, **When** exporta resumen, **Then** descarga un .xlsx con una fila por facturador.
-3. **Given** un administrador, **When** exporta detalle, **Then** descarga un .xlsx con una fila por bloque (fecha, inicio, fin, horas).
-
-### User Story 5 - Gestión de usuarios (Priority: P2)
-
-El administrador crea facturadores, los activa/desactiva y resetea contraseñas.
-
-**Why this priority**: Necesario para operar el sistema en producción.
-
-**Independent Test**: Crear un facturador, iniciar sesión con él, desactivarlo y verificar que ya no puede entrar.
+**Independent Test**: Con datos de varias personas en un mes, verificar totales y generar el .xlsx.
 
 **Acceptance Scenarios**:
-1. **Given** un administrador, **When** crea un usuario, **Then** puede iniciar sesión.
-2. **Given** un usuario desactivado, **When** intenta login, **Then** se le niega.
+1. **Given** el supervisor, **When** selecciona mes/año, **Then** ve el total por persona.
+2. **Given** el supervisor, **When** exporta resumen, **Then** descarga un .xlsx con una fila por persona.
+3. **Given** el supervisor, **When** exporta detalle, **Then** descarga un .xlsx con una fila por bloque.
 
 ### Edge Cases
 
-- Bloque que cruza la medianoche: NO permitido (se asume jornada dentro del mismo día).
-- Día sin bloques: el modal muestra lista vacía y permite crear el primero.
+- Bloque que cruza la medianoche: NO permitido.
 - Solapamiento exacto (fin == inicio de otro bloque): permitido.
-- Múltiples bloques idénticos: rechazado por solapamiento.
-- Usuario desactivado con token vigente: se valida `activo` en cada request vía JWT strategy.
+- La regla de 4 personas/día cuenta personas **distintas** con horas ese día (independiente de bloques).
+- Persona desactivada: sus horas históricas se conservan y aparecen en el reporte.
+- Día sin bloques: el modal permite crear el primero.
 
 ## Requirements
 
 ### Functional Requirements
 
-- **FR-001**: El sistema permite login por correo/contraseña con JWT (access + refresh).
-- **FR-002**: El sistema restringe por rol: `facturador` solo accede a sus horas; `administrador` a todo.
-- **FR-003**: El sistema muestra un calendario mensual con el total de horas por día.
-- **FR-004**: El sistema permite crear/editar/eliminar bloques de horas por día con validación de solapamiento.
-- **FR-005**: El sistema calcula `horas_totales` en el backend (decimal, ej. `4.50`).
-- **FR-006**: El sistema agrega horas por usuario en un rango de fechas (mes/año).
-- **FR-007**: El sistema exporta el reporte a Excel (resumen por facturador y detalle diario).
-- **FR-008**: El administrador gestiona usuarios (crear, activar/desactivar, reset password).
+- **FR-001**: Login por correo/contraseña con JWT (solo rol `administrador`).
+- **FR-002**: CRUD de personas (nombre, documento único, correo opcional, activo).
+- **FR-003**: Calendario mensual por persona con total de horas por día.
+- **FR-004**: CRUD de bloques de horas con validación de solapamiento.
+- **FR-005**: Máximo 4 personas distintas con horas en un mismo día.
+- **FR-006**: `horas_totales` calculado en el backend (decimal).
+- **FR-007**: Reporte mensual (resumen por persona + detalle diario).
+- **FR-008**: Exportación a Excel (resumen y detalle).
 
 ### Key Entities
 
-- **Usuario**: facturador o administrador; identidad, credenciales y rol.
-- **RegistroHora**: un bloque de horas (inicio/fin) en una fecha, perteneciente a un usuario.
-  Un día puede tener varios bloques (turno partido). `horas_totales` derivado del bloque.
+- **Usuario**: cuenta de login del supervisor (solo `administrador`).
+- **Persona**: facturador/a cuyas horas se registran (no inicia sesión). nombre, documento (único), correo (opcional), activo.
+- **RegistroHora**: bloque de horas (inicio/fin) de una persona en una fecha. Varios bloques por día.
 
 ## Success Criteria
 
-- **SC-001**: Un facturador marca sus horas del día en menos de 10 segundos.
-- **SC-002**: El total diario y mensual coincide con el cálculo manual en todos los casos.
-- **SC-003**: Los reportes exportados se abren en Excel sin errores.
-- **SC-004**: Ningún facturador puede leer ni modificar registros de otro facturador.
+- **SC-001**: El supervisor registra las horas de una persona en menos de 10 segundos.
+- **SC-002**: El total diario y mensual coincide con el cálculo manual.
+- **SC-003**: La regla de 4 personas/día se cumple siempre.
+- **SC-004**: Los reportes exportados se abren en Excel sin errores.
 
 ## Assumptions
 
-- El login usa el `correo` como identificador único.
-- `horas_totales` se expresa en horas decimales (ej. `4.50`), no en `hh:mm`.
-- No se soporta cruce de medianoche en un bloque.
-- `administrador` es el rol de coordinación (equivale a "coordinador").
-- Despliegue objetivo: IIS en Windows Server (iisnode + ServeStatic).
+- Solo el rol `administrador` (supervisor) inicia sesión; puede ampliarse en el futuro.
+- El login usa `correo` como identificador del usuario.
+- `horas_totales` en horas decimales; sin cruce de medianoche.
+- Despliegue objetivo: IIS (iisnode + ServeStatic).

@@ -6,6 +6,7 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'node:path';
 import { AuthModule } from './auth/auth.module.js';
 import { UsersModule } from './users/users.module.js';
+import { PersonasModule } from './personas/personas.module.js';
 import { RegistrosModule } from './registros/registros.module.js';
 import { ReportesModule } from './reportes/reportes.module.js';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard.js';
@@ -41,6 +42,7 @@ import { RolesGuard } from './common/guards/roles.guard.js';
     }),
     AuthModule,
     UsersModule,
+    PersonasModule,
     RegistrosModule,
     ReportesModule,
   ],

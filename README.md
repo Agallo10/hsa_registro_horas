@@ -1,7 +1,7 @@
 # Registro de Horas — Facturadores
 
-Sistema web para que los facturadores de un hospital registren las horas trabajadas cada
-día y el coordinador genere un reporte mensual consolidado, exportable a Excel.
+Sistema web para que el supervisor de un hospital registre las horas trabajadas por cada
+persona (facturador/a) y genere un reporte mensual consolidado, exportable a Excel.
 
 ## Stack
 
@@ -10,12 +10,16 @@ día y el coordinador genere un reporte mensual consolidado, exportable a Excel.
 - **Exportación**: `exceljs` (Excel en el cliente)
 - **Despliegue**: IIS (Windows Server) con `iisnode` + `@nestjs/serve-static`
 
-## Roles
+## Modelo de uso
 
-| Rol | Permisos |
-|-----|----------|
-| `facturador` | Ve y edita **solo sus** horas en el calendario |
-| `administrador` | Gestiona usuarios y ve/exporta el reporte de todos (coordinador) |
+- Un único usuario inicia sesión: el **supervisor** (`administrador`).
+- El supervisor gestiona **personas** (facturadores) y, al seleccionar una, registra sus
+  horas en un calendario mensual.
+- Las personas **no inician sesión**; son entidades gestionadas (nombre, documento único,
+  correo opcional). Pueden desactivarse conservando su histórico.
+- Un día puede tener como máximo **4 personas distintas** con horas registradas.
+- Una pestaña de **reporte mensual** muestra el total por persona y permite exportar a Excel
+  (resumen y detalle).
 
 ## Estructura
 
@@ -50,12 +54,11 @@ npm run seed              # crea el administrador y un facturador de prueba
 npm run start:dev         # http://localhost:3000/api
 ```
 
-Credenciales iniciales (cámbialas tras el primer acceso):
+Credencial inicial (cámbiala tras el primer acceso):
 
 | Correo | Contraseña | Rol |
 |--------|------------|-----|
-| `admin@hospital.local` | `admin123` | administrador |
-| `facturador@hospital.local` | `facturador123` | facturador |
+| `admin@hospital.local` | `admin123` | administrador (supervisor) |
 
 ### 3. Frontend (otra terminal)
 
@@ -83,15 +86,16 @@ npm run migration:run
 npm run migration:revert
 ```
 
-La migración inicial (`src/migrations/1758556800000-Init.ts`) crea las tablas
-`usuario` y `registro_hora`, el enum `usuario_rol_enum` y el índice compuesto
-`(usuario_id, fecha)`.
+Las migraciones crean las tablas `usuario`, `persona` y `registro_hora`, el enum
+`usuario_rol_enum` y el índice compuesto `(persona_id, fecha)`.
 
 ## Modelo de datos
 
-- **`usuario`**: id (uuid), nombre, correo (único), password_hash (bcrypt), rol
-  (`facturador`/`administrador`), activo, timestamps.
-- **`registro_hora`**: un bloque de horas. id (uuid), usuario_id (FK), fecha (date),
+- **`usuario`**: cuenta de login del supervisor. id (uuid), nombre, correo (único),
+  password_hash (bcrypt), rol (`administrador`), activo, timestamps.
+- **`persona`**: facturador/a (no inicia sesión). id (uuid), nombre, documento (único),
+  correo (opcional), activo, timestamps.
+- **`registro_hora`**: un bloque de horas. id (uuid), persona_id (FK), fecha (date),
   hora_inicio (time), hora_fin (time), horas_totales (numeric(4,2), calculado), observaciones,
   timestamps. Un día puede tener varios bloques (turno partido).
 
@@ -99,14 +103,15 @@ Reglas de negocio (en el backend):
 
 - `horas_totales = (hora_fin - hora_inicio)` en horas decimales.
 - No se permite `hora_fin <= hora_inicio`.
-- No se permiten bloques solapados el mismo día (los bordes se tocan → permitido).
+- No se permiten bloques solapados el mismo día para la misma persona.
+- Máximo **4 personas distintas** con horas registradas en un mismo día.
 
 ## API (prefijo `/api`)
 
 - `POST /auth/login`, `POST /auth/refresh`, `POST /auth/change-password`
-- `GET|POST|PATCH /users`, `POST /users/:id/reset-password` (administrador)
+- `GET|POST|PATCH /personas`, `GET /personas/:id`
 - `GET|POST /registros`, `GET|PATCH|DELETE /registros/:id`
-- `GET /reportes/mensual?year=&month=`, `GET /reportes/detalle?year=&month=` (administrador)
+- `GET /reportes/mensual?year=&month=`, `GET /reportes/detalle?year=&month=`
 
 Contrato completo en `specs/001-registro-horas/contracts/api.md`.
 

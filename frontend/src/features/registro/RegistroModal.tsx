@@ -33,6 +33,7 @@ function hoursBetween(inicio: string, fin: string): number {
 }
 
 interface RegistroModalProps {
+  personaId: string;
   fecha: string;
   registros: Registro[];
   onChanged: () => void;
@@ -43,7 +44,7 @@ export function RegistroModal({
   id,
   innerProps,
 }: ContextModalProps<RegistroModalProps>) {
-  const { fecha, registros, onChanged } = innerProps;
+  const { personaId, fecha, registros, onChanged } = innerProps;
 
   const [blocks, setBlocks] = useState<LocalBlock[]>(() =>
     registros.map((r) => ({
@@ -110,7 +111,7 @@ export function RegistroModal({
           if (block.id) {
             return registrosApi.update(block.id, payload);
           }
-          return registrosApi.create({ fecha, ...payload });
+          return registrosApi.create({ personaId, fecha, ...payload });
         }),
       );
 

@@ -1,5 +1,4 @@
 import {
-  IsBoolean,
   IsEmail,
   IsEnum,
   IsOptional,
@@ -22,28 +21,4 @@ export class CreateUserDto {
   @IsOptional()
   @IsEnum(Role)
   rol?: Role;
-}
-
-export class UpdateUserDto {
-  @IsOptional()
-  @IsString()
-  nombre?: string;
-
-  @IsOptional()
-  @IsEmail()
-  correo?: string;
-
-  @IsOptional()
-  @IsBoolean()
-  activo?: boolean;
-
-  @IsOptional()
-  @IsEnum(Role)
-  rol?: Role;
-}
-
-export class ResetPasswordDto {
-  @IsString()
-  @MinLength(6)
-  password: string;
 }

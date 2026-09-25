@@ -1,14 +1,33 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Badge, Group, Paper, Stack, Text, Title } from '@mantine/core';
+import { useNavigate, useParams } from 'react-router-dom';
+import {
+  Badge,
+  Button,
+  Group,
+  Paper,
+  Stack,
+  Text,
+  Title,
+} from '@mantine/core';
 import { Calendar } from '@mantine/dates';
 import { openContextModal } from '@mantine/modals';
 import dayjs from 'dayjs';
-import { registrosApi } from '../../api/endpoints';
-import type { Registro } from '../../types';
+import { personasApi, registrosApi } from '../../api/endpoints';
+import type { Persona, Registro } from '../../types';
 
 export function CalendarioView() {
+  const { id: personaId = '' } = useParams();
+  const navigate = useNavigate();
+  const [persona, setPersona] = useState<Persona | null>(null);
   const [month, setMonth] = useState(() => dayjs().format('YYYY-MM'));
   const [registros, setRegistros] = useState<Registro[]>([]);
+
+  useEffect(() => {
+    personasApi
+      .findById(personaId)
+      .then(setPersona)
+      .catch(() => setPersona(null));
+  }, [personaId]);
 
   const range = useMemo(() => {
     const start = dayjs(`${month}-01`);
@@ -20,13 +39,18 @@ export function CalendarioView() {
   }, [month]);
 
   const refresh = async () => {
-    const data = await registrosApi.list(range.desde, range.hasta);
+    const data = await registrosApi.list({
+      personaId,
+      fechaDesde: range.desde,
+      fechaHasta: range.hasta,
+    });
     setRegistros(data);
   };
 
   useEffect(() => {
     refresh().catch(() => undefined);
-  }, [range.desde, range.hasta]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [personaId, range.desde, range.hasta]);
 
   const { byFecha, totals } = useMemo(() => {
     const byFecha: Record<string, Registro[]> = {};
@@ -44,6 +68,7 @@ export function CalendarioView() {
       title: 'Registro de horas',
       size: 'lg',
       innerProps: {
+        personaId,
         fecha,
         registros: byFecha[fecha] ?? [],
         onChanged: refresh,
@@ -55,9 +80,14 @@ export function CalendarioView() {
     <Stack>
       <Group justify="space-between">
         <div>
-          <Title order={2}>Calendario</Title>
+          <Group gap="xs">
+            <Button variant="subtle" size="xs" onClick={() => navigate('/')}>
+              ← Personas
+            </Button>
+          </Group>
+          <Title order={2}>{persona?.nombre ?? 'Cargando…'}</Title>
           <Text c="dimmed" size="sm">
-            Haz clic en un día para registrar tus horas.
+            Haz clic en un día para registrar las horas trabajadas.
           </Text>
         </div>
       </Group>

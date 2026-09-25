@@ -2,6 +2,7 @@ import 'dotenv/config';
 import 'reflect-metadata';
 import { DataSource } from 'typeorm';
 import { Usuario } from './users/usuario.entity.js';
+import { Persona } from './personas/persona.entity.js';
 import { RegistroHora } from './registros/registro-hora.entity.js';
 
 export const AppDataSource = new DataSource({
@@ -11,7 +12,7 @@ export const AppDataSource = new DataSource({
   username: process.env.DATABASE_USER,
   password: process.env.DATABASE_PASSWORD ?? '',
   database: process.env.DATABASE_NAME ?? 'registro_horas',
-  entities: [Usuario, RegistroHora],
+  entities: [Usuario, Persona, RegistroHora],
   migrations: ['src/migrations/*.ts'],
   synchronize: false,
 });

@@ -2,7 +2,6 @@ import {
   Body,
   Controller,
   Delete,
-  ForbiddenException,
   Get,
   NotFoundException,
   Param,
@@ -10,60 +9,50 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import {
-  toRegistroDto,
-  RegistrosService,
-} from './registros.service.js';
+import { RegistrosService, toRegistroDto } from './registros.service.js';
 import {
   CreateRegistroDto,
   QueryRegistroDto,
   UpdateRegistroDto,
 } from './dto/registro.dto.js';
-import { CurrentUser } from '../common/decorators/current-user.decorator.js';
-import type { AuthUser } from '../common/auth-user.interface.js';
+import { Roles } from '../common/decorators/roles.decorator.js';
 import { Role } from '../common/role.enum.js';
 
 @Controller('registros')
+@Roles(Role.Administrador)
 export class RegistrosController {
   constructor(private readonly registrosService: RegistrosService) {}
 
   @Get()
-  async findAll(@Query() query: QueryRegistroDto, @CurrentUser() user: AuthUser) {
-    const registros = await this.registrosService.findAll(query, user);
+  async findAll(@Query() query: QueryRegistroDto) {
+    const registros = await this.registrosService.findAll(query);
     return registros.map(toRegistroDto);
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+  async findOne(@Param('id') id: string) {
     const registro = await this.registrosService.findById(id);
     if (!registro) {
       throw new NotFoundException('Registro no encontrado');
-    }
-    if (user.role !== Role.Administrador && registro.usuarioId !== user.userId) {
-      throw new ForbiddenException('No puede ver registros de otros');
     }
     return toRegistroDto(registro);
   }
 
   @Post()
-  async create(@Body() dto: CreateRegistroDto, @CurrentUser() user: AuthUser) {
-    const registro = await this.registrosService.create(dto, user);
+  async create(@Body() dto: CreateRegistroDto) {
+    const registro = await this.registrosService.create(dto);
     return toRegistroDto(registro);
   }
 
   @Patch(':id')
-  async update(
-    @Param('id') id: string,
-    @Body() dto: UpdateRegistroDto,
-    @CurrentUser() user: AuthUser,
-  ) {
-    const registro = await this.registrosService.update(id, dto, user);
+  async update(@Param('id') id: string, @Body() dto: UpdateRegistroDto) {
+    const registro = await this.registrosService.update(id, dto);
     return toRegistroDto(registro);
   }
 
   @Delete(':id')
-  async remove(@Param('id') id: string, @CurrentUser() user: AuthUser) {
-    await this.registrosService.remove(id, user);
+  async remove(@Param('id') id: string) {
+    await this.registrosService.remove(id);
     return { message: 'Registro eliminado' };
   }
 }

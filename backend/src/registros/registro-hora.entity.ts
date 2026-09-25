@@ -7,19 +7,19 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { Usuario } from '../users/usuario.entity.js';
+import { Persona } from '../personas/persona.entity.js';
 
 @Entity('registro_hora')
 export class RegistroHora {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => Usuario, { onDelete: 'CASCADE', nullable: false })
-  @JoinColumn({ name: 'usuario_id' })
-  usuario: Usuario;
+  @ManyToOne(() => Persona, { onDelete: 'CASCADE', nullable: false })
+  @JoinColumn({ name: 'persona_id' })
+  persona: Persona;
 
-  @Column({ name: 'usuario_id', type: 'uuid' })
-  usuarioId: string;
+  @Column({ name: 'persona_id', type: 'uuid' })
+  personaId: string;
 
   @Column({ name: 'fecha', type: 'date' })
   fecha: string;

@@ -1,13 +1,12 @@
 import {
   ConflictException,
   Injectable,
-  NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { Usuario } from './usuario.entity.js';
-import { CreateUserDto, ResetPasswordDto, UpdateUserDto } from './dto/user.dto.js';
+import { CreateUserDto } from './dto/user.dto.js';
 
 export interface UserDto {
   id: string;
@@ -40,10 +39,6 @@ export class UsersService {
     return this.usersRepository.findOne({ where: { id } });
   }
 
-  async findAll(): Promise<Usuario[]> {
-    return this.usersRepository.find({ order: { nombre: 'ASC' } });
-  }
-
   async create(dto: CreateUserDto): Promise<Usuario> {
     const existing = await this.findByCorreo(dto.correo);
     if (existing) {
@@ -57,33 +52,6 @@ export class UsersService {
       rol: dto.rol,
       activo: true,
     });
-    return this.usersRepository.save(user);
-  }
-
-  async update(id: string, dto: UpdateUserDto): Promise<Usuario> {
-    const user = await this.findById(id);
-    if (!user) {
-      throw new NotFoundException('Usuario no encontrado');
-    }
-    if (dto.nombre !== undefined) user.nombre = dto.nombre;
-    if (dto.correo !== undefined) {
-      const existing = await this.findByCorreo(dto.correo);
-      if (existing && existing.id !== id) {
-        throw new ConflictException('El correo ya está registrado');
-      }
-      user.correo = dto.correo;
-    }
-    if (dto.rol !== undefined) user.rol = dto.rol;
-    if (dto.activo !== undefined) user.activo = dto.activo;
-    return this.usersRepository.save(user);
-  }
-
-  async resetPassword(id: string, dto: ResetPasswordDto): Promise<Usuario> {
-    const user = await this.findById(id);
-    if (!user) {
-      throw new NotFoundException('Usuario no encontrado');
-    }
-    user.passwordHash = await bcrypt.hash(dto.password, 10);
     return this.usersRepository.save(user);
   }
 

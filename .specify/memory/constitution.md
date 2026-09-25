@@ -11,14 +11,15 @@ Sync Impact Report
 
 ## Core Principles
 
-### I. Seguridad y control de acceso por roles (NO NEGOCIABLE)
-Toda funcionalidad y endpoint respeta el modelo de roles `facturador` y `administrador`.
+### I. Seguridad y control de acceso (NO NEGOCIABLE)
+La aplicación es de un único usuario: el supervisor (`administrador`) inicia sesión y
+gestiona el registro de horas de las `personas` (facturadores, que NO inician sesión).
 - La autorización se aplica en el backend (guards), nunca solo en el frontend.
 - Las contraseñas se almacenan con bcrypt (nunca en texto plano).
 - La sesión usa JWT: access token de corta duración + refresh token.
-- Un `facturador` solo puede ver, crear, editar y eliminar SUS PROPIOS registros de horas.
-- Un `administrador` (coordinador) puede gestionar usuarios y ver/exportar el reporte de todos.
+- Solo el rol `administrador` inicia sesión; las personas son entidades gestionadas, no cuentas.
 - Ningún secreto, clave o credencial puede exponerse en logs ni commitearse al repositorio.
+- El modelo permite añadir roles/facturadores con login en el futuro sin romper el contrato.
 
 ### II. Separación backend/frontend con contrato de API claro
 El backend (NestJS) y el frontend (React SPA) se mantienen como proyectos independientes
@@ -31,7 +32,7 @@ que se comunican exclusivamente vía API REST JSON.
 ### III. Simplicidad y mantenibilidad (operador único)
 El proyecto es mantenido por una sola persona, por lo que prima la simplicidad.
 - Evitar abstracciones prematuras; añadir complejidad solo cuando el requisito la justifique (YAGNI).
-- Un módulo de NestJS por dominio (auth, users, registros, reportes).
+- Un módulo de NestJS por dominio (auth, users, personas, registros, reportes).
 - El código sigue las convenciones existentes del framework y del proyecto.
 - Nombres de archivos, variables y funciones descriptivos y consistentes.
 
@@ -51,10 +52,12 @@ El trabajo se organiza mediante Spec-Driven Development (Spec Kit).
 
 ## Security & Data Handling
 
-- Autenticación local (correo/contraseña) con JWT access + refresh.
-- Roles: `facturador` (gestiona sus horas) y `administrador` (usuarios + reporte global).
+- Autenticación local (correo/contraseña) con JWT access + refresh (único rol: `administrador`).
+- Las `personas` (facturadores) son entidades gestionadas por el supervisor; no tienen credenciales.
 - `horas_totales` se calcula en el backend al guardar (nunca se confía en el valor enviado por el cliente).
-- Validación de solapamiento de bloques en el mismo día para el mismo usuario (en el backend).
+- Validación de solapamiento de bloques en el mismo día para la misma persona.
+- Máximo 4 personas distintas con horas registradas en un mismo día.
+- Personas desactivadas conservan su histórico de horas.
 
 ## Development Workflow
 

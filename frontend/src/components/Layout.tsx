@@ -10,7 +10,7 @@ import { NavLink as RouterNavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext';
 
 export function Layout() {
-  const { user, isAdmin, logout } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -26,9 +26,7 @@ export function Layout() {
     >
       <AppShell.Header>
         <Group h="100%" px="md" justify="space-between">
-          <Group>
-            <Text fw={700}>Registro de Horas</Text>
-          </Group>
+          <Text fw={700}>Registro de Horas</Text>
           <Group gap="sm">
             <Text size="sm" c="dimmed">
               {user?.nombre}
@@ -42,26 +40,12 @@ export function Layout() {
 
       <AppShell.Navbar p="xs">
         <ScrollArea>
+          <NavLink component={RouterNavLink} to="/" label="Personas" end />
           <NavLink
             component={RouterNavLink}
-            to="/"
-            label="Calendario"
-            end
+            to="/reporte"
+            label="Reporte mensual"
           />
-          {isAdmin && (
-            <>
-              <NavLink
-                component={RouterNavLink}
-                to="/reporte"
-                label="Reporte mensual"
-              />
-              <NavLink
-                component={RouterNavLink}
-                to="/usuarios"
-                label="Usuarios"
-              />
-            </>
-          )}
         </ScrollArea>
       </AppShell.Navbar>
 

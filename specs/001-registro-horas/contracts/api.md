@@ -1,57 +1,53 @@
 # API Contracts
 
 Base URL: `/api`. Auth: `Authorization: Bearer <accessToken>` (excepto `@public`).
+Único rol que inicia sesión: `administrador`. Todos los endpoints de negocio requieren
+sesión autenticada.
 
 ## Auth
 
 ### `POST /auth/login` (public)
-Body: `{ correo: string, password: string }`
-Respuesta: `{ accessToken, refreshToken, user: { id, nombre, correo, rol } }`
+Body: `{ correo, password }` → `{ accessToken, refreshToken, user }`
 
 ### `POST /auth/refresh` (public)
-Body: `{ refreshToken: string }`
-Respuesta: `{ accessToken, refreshToken }`
+Body: `{ refreshToken }` → `{ accessToken, refreshToken }`
 
 ### `POST /auth/change-password`
-Body: `{ currentPassword: string, newPassword: string }`
+Body: `{ currentPassword, newPassword }`
 
-## Usuarios (solo `administrador`)
+## Personas
 
-### `GET /users`
-Respuesta: `UserDto[]` (id, nombre, correo, rol, activo)
+### `GET /personas`
+Respuesta: `PersonaDto[]` (id, nombre, documento, correo, activo)
 
-### `POST /users`
-Body: `{ nombre, correo, password, rol }` → `UserDto`
+### `GET /personas/:id`
+Respuesta: `PersonaDto`
 
-### `PATCH /users/:id`
-Body parcial: `{ nombre?, correo?, activo?, rol? }` → `UserDto`
+### `POST /personas`
+Body: `{ nombre, documento, correo? }` → `PersonaDto`
 
-### `POST /users/:id/reset-password`
-Body: `{ password }`
+### `PATCH /personas/:id`
+Body parcial: `{ nombre?, documento?, correo?, activo? }` → `PersonaDto`
 
 ## Registros de horas
 
-### `GET /registros?fechaDesde&fechaHasta`
-- `facturador`: solo sus registros en el rango.
-- `administrador`: puede pasar `usuarioId` opcional para filtrar.
-Respuesta: `RegistroHoraDto[]`
+### `GET /registros?personaId&fechaDesde&fechaHasta`
+Respuesta: `RegistroHoraDto[]` (id, personaId, fecha, horaInicio, horaFin, horasTotales, observaciones)
 
 ### `POST /registros`
-Body: `{ fecha: 'YYYY-MM-DD', horaInicio: 'HH:mm', horaFin: 'HH:mm', observaciones? }`
-- Crea el bloque para el usuario autenticado (facturador) o para `usuarioId` (administrador).
-Respuesta: `RegistroHoraDto` (incluye `horasTotales`).
+Body: `{ personaId, fecha: 'YYYY-MM-DD', horaInicio: 'HH:mm', horaFin: 'HH:mm', observaciones? }`
+- Valida solapamiento y máximo 4 personas distintas por día.
+Respuesta: `RegistroHoraDto`
 
 ### `PATCH /registros/:id`
 Body parcial: `{ horaInicio?, horaFin?, observaciones? }`
-- Solo el dueño (facturador) o un administrador.
 
 ### `DELETE /registros/:id`
-- Solo el dueño o un administrador.
 
-## Reportes (solo `administrador`)
+## Reportes
 
-### `GET /reportes/mensual?year=2026&month=9`
-Respuesta: `{ year, month, filas: [{ usuarioId, nombre, correo, horasTotales, diasRegistrados }] }`
+### `GET /reportes/mensual?year=&month=`
+Respuesta: `{ year, month, filas: [{ personaId, nombre, documento, correo, activo, horasTotales, diasRegistrados }] }`
 
-### `GET /reportes/detalle?year=2026&month=9`
-Respuesta: `{ year, month, filas: [{ usuarioId, nombre, fecha, horaInicio, horaFin, horasTotales, observaciones }] }`
+### `GET /reportes/detalle?year=&month=`
+Respuesta: `{ year, month, filas: [{ personaId, nombre, documento, fecha, horaInicio, horaFin, horasTotales, observaciones }] }`

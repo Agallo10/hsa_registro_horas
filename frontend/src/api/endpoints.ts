@@ -2,9 +2,9 @@ import { api } from './client';
 import type {
   DetalleFila,
   LoginResponse,
+  Persona,
   Registro,
   ResumenFila,
-  Usuario,
 } from '../types';
 
 export interface AuthApi {
@@ -25,7 +25,31 @@ export const authApi: AuthApi = {
   },
 };
 
+export const personasApi = {
+  async list(): Promise<Persona[]> {
+    const { data } = await api.get<Persona[]>('/personas');
+    return data;
+  },
+  async findById(id: string): Promise<Persona> {
+    const { data } = await api.get<Persona>(`/personas/${id}`);
+    return data;
+  },
+  async create(input: {
+    nombre: string;
+    documento: string;
+    correo?: string;
+  }): Promise<Persona> {
+    const { data } = await api.post<Persona>('/personas', input);
+    return data;
+  },
+  async update(id: string, input: Partial<Persona>): Promise<Persona> {
+    const { data } = await api.patch<Persona>(`/personas/${id}`, input);
+    return data;
+  },
+};
+
 export interface RegistroInput {
+  personaId: string;
   fecha: string;
   horaInicio: string;
   horaFin: string;
@@ -33,17 +57,22 @@ export interface RegistroInput {
 }
 
 export const registrosApi = {
-  async list(fechaDesde: string, fechaHasta: string): Promise<Registro[]> {
-    const { data } = await api.get<Registro[]>('/registros', {
-      params: { fechaDesde, fechaHasta },
-    });
+  async list(params: {
+    personaId?: string;
+    fechaDesde?: string;
+    fechaHasta?: string;
+  }): Promise<Registro[]> {
+    const { data } = await api.get<Registro[]>('/registros', { params });
     return data;
   },
   async create(input: RegistroInput): Promise<Registro> {
     const { data } = await api.post<Registro>('/registros', input);
     return data;
   },
-  async update(id: string, input: Partial<RegistroInput>): Promise<Registro> {
+  async update(
+    id: string,
+    input: Partial<Omit<RegistroInput, 'personaId' | 'fecha'>>,
+  ): Promise<Registro> {
     const { data } = await api.patch<Registro>(`/registros/${id}`, input);
     return data;
   },
@@ -66,28 +95,5 @@ export const reportesApi = {
       { params: { year, month } },
     );
     return data.filas;
-  },
-};
-
-export const usersApi = {
-  async list(): Promise<Usuario[]> {
-    const { data } = await api.get<Usuario[]>('/users');
-    return data;
-  },
-  async create(input: {
-    nombre: string;
-    correo: string;
-    password: string;
-    rol: string;
-  }): Promise<Usuario> {
-    const { data } = await api.post<Usuario>('/users', input);
-    return data;
-  },
-  async update(id: string, input: Partial<Usuario>): Promise<Usuario> {
-    const { data } = await api.patch<Usuario>(`/users/${id}`, input);
-    return data;
-  },
-  async resetPassword(id: string, password: string): Promise<void> {
-    await api.post(`/users/${id}/reset-password`, { password });
   },
 };

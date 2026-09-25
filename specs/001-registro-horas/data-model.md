@@ -2,42 +2,50 @@
 
 ## Entidades
 
-### `usuario`
+### `usuario` (login del supervisor)
 | columna | tipo | constraints |
 |---|---|---|
-| id | uuid | PK, `gen_random_uuid()` |
+| id | uuid | PK |
 | nombre | varchar(120) | not null |
 | correo | varchar(160) | unique, not null |
 | password_hash | varchar(255) | not null |
-| rol | enum `facturador`, `administrador` | default `facturador` |
+| rol | enum `administrador` | default `administrador` |
 | activo | boolean | default true |
-| created_at | timestamptz | default now() |
-| updated_at | timestamptz | default now() |
+| created_at / updated_at | timestamptz | |
+
+### `persona` (facturador/a; no inicia sesión)
+| columna | tipo | constraints |
+|---|---|---|
+| id | uuid | PK |
+| nombre | varchar(120) | not null |
+| documento | varchar(30) | unique, not null |
+| correo | varchar(160) | null, unique |
+| activo | boolean | default true |
+| created_at / updated_at | timestamptz | |
 
 ### `registro_hora`
 | columna | tipo | constraints |
 |---|---|---|
 | id | uuid | PK |
-| usuario_id | uuid | FK → `usuario.id` ON DELETE CASCADE, index |
+| persona_id | uuid | FK → `persona.id` ON DELETE CASCADE, index |
 | fecha | date | not null |
 | hora_inicio | time | not null |
 | hora_fin | time | not null, CHECK `hora_fin > hora_inicio` |
-| horas_totales | numeric(4,2) | not null (calculado en backend) |
+| horas_totales | numeric(4,2) | not null (calculado) |
 | observaciones | text | null |
-| created_at | timestamptz | default now() |
-| updated_at | timestamptz | default now() |
+| created_at / updated_at | timestamptz | |
 
-Índice compuesto: `(usuario_id, fecha)` para lecturas del calendario y validación de solapamiento.
+Índice compuesto: `(persona_id, fecha)`.
 
 ## Relaciones
 
-- `Usuario` 1 — N `RegistroHora` (un facturador, muchos bloques).
-- Un día (fecha) puede tener N `RegistroHora` para el mismo usuario (turno partido).
+- `Persona` 1 — N `RegistroHora`.
+- Un día puede tener N bloques de una misma persona (turno partido).
 
 ## Reglas de negocio
 
-- `horas_totales = (hora_fin - hora_inicio)` en horas decimales, redondeado a 2 decimales.
+- `horas_totales = (hora_fin - hora_inicio)` en horas decimales.
 - No se permite `hora_fin <= hora_inicio`.
-- No se permiten bloques solapados para el mismo usuario y fecha:
-  solapamiento si `inicioA < finB AND inicioB < finA` (los bordes se tocan → permitido).
-- El cliente no envía `horas_totales`; el backend lo calcula y descarta cualquier valor recibido.
+- No se permiten bloques solapados para la misma persona y fecha.
+- **Máximo 4 personas distintas** con horas en un mismo día (validado al crear).
+- El cliente no envía `horas_totales`; se calcula y descarta en el backend.

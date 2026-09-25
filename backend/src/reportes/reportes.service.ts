@@ -3,16 +3,19 @@ import { DataSource } from 'typeorm';
 import { ReporteQueryDto } from './dto/reporte-query.dto.js';
 
 export interface ResumenFila {
-  usuarioId: string;
+  personaId: string;
   nombre: string;
-  correo: string;
+  documento: string;
+  correo: string | null;
+  activo: boolean;
   horasTotales: number;
   diasRegistrados: number;
 }
 
 export interface DetalleFila {
-  usuarioId: string;
+  personaId: string;
   nombre: string;
+  documento: string;
   fecha: string;
   horaInicio: string;
   horaFin: string;
@@ -35,33 +38,38 @@ export class ReportesService {
   async resumenMensual(dto: ReporteQueryDto): Promise<ResumenFila[]> {
     const { desde, hasta } = this.rango(dto);
     const rows: Array<{
-      usuarioId: string;
+      personaId: string;
       nombre: string;
-      correo: string;
+      documento: string;
+      correo: string | null;
+      activo: boolean;
       horasTotales: string | null;
       diasRegistrados: string;
     }> = await this.dataSource.query(
       `
       SELECT
-        u.id AS "usuarioId",
-        u.nombre AS "nombre",
-        u.correo AS "correo",
+        p.id AS "personaId",
+        p.nombre AS "nombre",
+        p.documento AS "documento",
+        p.correo AS "correo",
+        p.activo AS "activo",
         COALESCE(SUM(r.horas_totales), 0) AS "horasTotales",
         COUNT(DISTINCT r.fecha) AS "diasRegistrados"
-      FROM usuario u
+      FROM persona p
       LEFT JOIN registro_hora r
-        ON r.usuario_id = u.id AND r.fecha >= $1 AND r.fecha <= $2
-      WHERE u.rol = 'facturador' AND u.activo = true
-      GROUP BY u.id, u.nombre, u.correo
-      ORDER BY u.nombre ASC
+        ON r.persona_id = p.id AND r.fecha >= $1 AND r.fecha <= $2
+      GROUP BY p.id, p.nombre, p.documento, p.correo, p.activo
+      ORDER BY p.nombre ASC
       `,
       [desde, hasta],
     );
 
     return rows.map((r) => ({
-      usuarioId: r.usuarioId,
+      personaId: r.personaId,
       nombre: r.nombre,
+      documento: r.documento,
       correo: r.correo,
+      activo: r.activo,
       horasTotales: Number(r.horasTotales),
       diasRegistrados: Number(r.diasRegistrados),
     }));
@@ -70,8 +78,9 @@ export class ReportesService {
   async detalleMensual(dto: ReporteQueryDto): Promise<DetalleFila[]> {
     const { desde, hasta } = this.rango(dto);
     const rows: Array<{
-      usuarioId: string;
+      personaId: string;
       nombre: string;
+      documento: string;
       fecha: string;
       horaInicio: string;
       horaFin: string;
@@ -80,24 +89,26 @@ export class ReportesService {
     }> = await this.dataSource.query(
       `
       SELECT
-        u.id AS "usuarioId",
-        u.nombre AS "nombre",
+        p.id AS "personaId",
+        p.nombre AS "nombre",
+        p.documento AS "documento",
         r.fecha::text AS "fecha",
         to_char(r.hora_inicio, 'HH24:MI') AS "horaInicio",
         to_char(r.hora_fin, 'HH24:MI') AS "horaFin",
         r.horas_totales AS "horasTotales",
         r.observaciones AS "observaciones"
       FROM registro_hora r
-      INNER JOIN usuario u ON u.id = r.usuario_id
-      WHERE r.fecha >= $1 AND r.fecha <= $2 AND u.rol = 'facturador'
-      ORDER BY u.nombre ASC, r.fecha ASC, r.hora_inicio ASC
+      INNER JOIN persona p ON p.id = r.persona_id
+      WHERE r.fecha >= $1 AND r.fecha <= $2
+      ORDER BY p.nombre ASC, r.fecha ASC, r.hora_inicio ASC
       `,
       [desde, hasta],
     );
 
     return rows.map((r) => ({
-      usuarioId: r.usuarioId,
+      personaId: r.personaId,
       nombre: r.nombre,
+      documento: r.documento,
       fecha: r.fecha,
       horaInicio: r.horaInicio,
       horaFin: r.horaFin,
