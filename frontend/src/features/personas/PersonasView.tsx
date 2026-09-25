@@ -139,6 +139,7 @@ export function PersonasView() {
                     <Switch
                       checked={p.activo}
                       onChange={() => toggleActivo(p)}
+                      onClick={(e) => e.stopPropagation()}
                       aria-label="Activar/desactivar"
                     />
                     <ActionIcon
