@@ -1,13 +1,15 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ActionIcon,
   Alert,
   Badge,
   Button,
+  Card,
   Group,
   Modal,
   Paper,
+  SimpleGrid,
   Stack,
   Switch,
   Table,
@@ -35,6 +37,27 @@ const emptyForm: FormState = {
   area: '',
 };
 
+function StatCard({
+  label,
+  value,
+  color,
+}: {
+  label: string;
+  value: number;
+  color: string;
+}) {
+  return (
+    <Card padding="md" radius="md" withBorder>
+      <Text size="xs" c="dimmed" tt="uppercase" fw={600}>
+        {label}
+      </Text>
+      <Text fw={700} fz={28} c={color} lh={1.1}>
+        {value}
+      </Text>
+    </Card>
+  );
+}
+
 export function PersonasView() {
   const navigate = useNavigate();
   const [personas, setPersonas] = useState<Persona[]>([]);
@@ -50,6 +73,11 @@ export function PersonasView() {
   useEffect(() => {
     cargar().catch(() => undefined);
   }, [cargar]);
+
+  const activas = useMemo(
+    () => personas.filter((p) => p.activo).length,
+    [personas],
+  );
 
   const abrirNueva = () => {
     setForm(emptyForm);
@@ -99,8 +127,8 @@ export function PersonasView() {
   };
 
   return (
-    <Stack>
-      <Group justify="space-between">
+    <Stack gap="lg">
+      <Group justify="space-between" align="flex-end">
         <div>
           <Title order={2}>Personas</Title>
           <Text c="dimmed" size="sm">
@@ -110,8 +138,23 @@ export function PersonasView() {
         <Button onClick={abrirNueva}>Nueva persona</Button>
       </Group>
 
-      <Paper withBorder p="md">
-        <Table striped highlightOnHover>
+      <SimpleGrid cols={{ base: 1, xs: 3 }}>
+        <StatCard label="Total" value={personas.length} color="hsaGreen.7" />
+        <StatCard label="Activas" value={activas} color="hsaGreen.6" />
+        <StatCard
+          label="Inactivas"
+          value={personas.length - activas}
+          color="gray.6"
+        />
+      </SimpleGrid>
+
+      <Paper withBorder radius="lg" p={0} style={{ overflow: 'hidden' }}>
+        <Table
+          className="hsa-table"
+          highlightOnHover
+          horizontalSpacing="md"
+          verticalSpacing="sm"
+        >
           <Table.Thead>
             <Table.Tr>
               <Table.Th>Nombre</Table.Th>
@@ -126,34 +169,45 @@ export function PersonasView() {
             {personas.map((p) => (
               <Table.Tr
                 key={p.id}
-                style={{ cursor: p.activo ? 'pointer' : 'default' }}
+                className={p.activo ? 'hsa-row-clickable' : undefined}
                 onClick={() => p.activo && navigate(`/persona/${p.id}`)}
               >
-                <Table.Td fw={500}>{p.nombre}</Table.Td>
+                <Table.Td fw={600}>{p.nombre}</Table.Td>
                 <Table.Td>{p.documento}</Table.Td>
                 <Table.Td>{p.area ?? '—'}</Table.Td>
                 <Table.Td>{p.correo ?? '—'}</Table.Td>
                 <Table.Td>
                   {p.activo ? (
-                    <Badge color="teal">Activo</Badge>
+                    <Badge color="hsaGreen" variant="light">
+                      Activo
+                    </Badge>
                   ) : (
-                    <Badge color="gray">Inactivo</Badge>
+                    <Badge color="gray" variant="light">
+                      Inactivo
+                    </Badge>
                   )}
                 </Table.Td>
                 <Table.Td>
-                  <Group gap="xs" justify="flex-end" wrap="nowrap">
+                  <Group
+                    gap="xs"
+                    justify="flex-end"
+                    wrap="nowrap"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <Switch
                       checked={p.activo}
                       onChange={() => toggleActivo(p)}
-                      onClick={(e) => e.stopPropagation()}
                       aria-label="Activar/desactivar"
+                      color="hsaGreen"
                     />
                     <ActionIcon
                       variant="subtle"
+                      color="hsaGreen"
                       onClick={(e) => {
                         e.stopPropagation();
                         abrirEditar(p);
                       }}
+                      aria-label="Editar"
                     >
                       ✎
                     </ActionIcon>
@@ -164,8 +218,9 @@ export function PersonasView() {
             {personas.length === 0 && (
               <Table.Tr>
                 <Table.Td colSpan={6}>
-                  <Text c="dimmed" ta="center">
-                    No hay personas registradas.
+                  <Text c="dimmed" ta="center" py="lg">
+                    No hay personas registradas. Crea la primera con “Nueva
+                    persona”.
                   </Text>
                 </Table.Td>
               </Table.Tr>
@@ -178,11 +233,13 @@ export function PersonasView() {
         opened={open}
         onClose={() => setOpen(false)}
         title={form.id ? 'Editar persona' : 'Nueva persona'}
+        centered
       >
         <Stack>
           {error && <Alert color="red">{error}</Alert>}
           <TextInput
             label="Nombre"
+            placeholder="Nombre completo"
             value={form.nombre}
             onChange={(e) =>
               setForm((f) => ({ ...f, nombre: e.currentTarget.value }))
@@ -190,9 +247,18 @@ export function PersonasView() {
           />
           <TextInput
             label="Documento"
+            placeholder="Número de documento"
             value={form.documento}
             onChange={(e) =>
               setForm((f) => ({ ...f, documento: e.currentTarget.value }))
+            }
+          />
+          <TextInput
+            label="Área (opcional)"
+            placeholder="Facturación Urgencias"
+            value={form.area}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, area: e.currentTarget.value }))
             }
           />
           <TextInput
@@ -203,14 +269,7 @@ export function PersonasView() {
               setForm((f) => ({ ...f, correo: e.currentTarget.value }))
             }
           />
-          <TextInput
-            label="Área (opcional)"
-            value={form.area}
-            onChange={(e) =>
-              setForm((f) => ({ ...f, area: e.currentTarget.value }))
-            }
-          />
-          <Group justify="flex-end">
+          <Group justify="flex-end" mt="sm">
             <Button variant="default" onClick={() => setOpen(false)}>
               Cancelar
             </Button>

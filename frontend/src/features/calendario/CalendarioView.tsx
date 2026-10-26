@@ -2,9 +2,12 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Badge,
+  Box,
   Button,
+  Card,
+  Divider,
+  Grid,
   Group,
-  Paper,
   Stack,
   Text,
   Title,
@@ -62,6 +65,12 @@ export function CalendarioView() {
     return { byFecha, totals };
   }, [registros]);
 
+  const resumen = useMemo(() => {
+    const dias = Object.keys(totals).length;
+    const horas = Object.values(totals).reduce((s, h) => s + h, 0);
+    return { dias, horas: Math.round(horas * 100) / 100 };
+  }, [totals]);
+
   const openDia = (fecha: string) => {
     openContextModal({
       modal: 'registro',
@@ -77,46 +86,118 @@ export function CalendarioView() {
   };
 
   return (
-    <Stack>
-      <Group justify="space-between">
+    <Stack gap="lg">
+      <Group justify="space-between" align="flex-end">
         <div>
-          <Group gap="xs">
-            <Button variant="subtle" size="xs" onClick={() => navigate('/')}>
-              ← Personas
-            </Button>
+          <Button
+            variant="subtle"
+            size="xs"
+            color="hsaGreen"
+            px={0}
+            mb={4}
+            onClick={() => navigate('/')}
+          >
+            ← Personas
+          </Button>
+          <Group gap="sm">
+            <Title order={2}>{persona?.nombre ?? 'Cargando…'}</Title>
+            {persona?.area && (
+              <Badge color="hsaLime" variant="light" tt="none">
+                {persona.area}
+              </Badge>
+            )}
           </Group>
-          <Title order={2}>{persona?.nombre ?? 'Cargando…'}</Title>
           <Text c="dimmed" size="sm">
             Haz clic en un día para registrar las horas trabajadas.
           </Text>
         </div>
       </Group>
 
-      <Paper withBorder p="md" maw={520}>
-        <Calendar
-          date={`${month}-01`}
-          maxLevel="month"
-          minLevel="month"
-          onNextMonth={(d) => setMonth(d.slice(0, 7))}
-          onPreviousMonth={(d) => setMonth(d.slice(0, 7))}
-          getDayProps={(date) => ({
-            onClick: () => openDia(date),
-          })}
-          renderDay={(date) => {
-            const total = totals[date] ?? 0;
-            return (
-              <div>
-                <div>{dayjs(date).date()}</div>
-                {total > 0 && (
-                  <Badge size="xs" variant="filled" fullWidth mt={2}>
-                    {total}h
-                  </Badge>
-                )}
-              </div>
-            );
-          }}
-        />
-      </Paper>
+      <Grid gutter="lg">
+        <Grid.Col span={{ base: 12, md: 7 }}>
+          <Card padding="lg">
+            <Calendar
+              date={`${month}-01`}
+              maxLevel="month"
+              minLevel="month"
+              onNextMonth={(d) => setMonth(d.slice(0, 7))}
+              onPreviousMonth={(d) => setMonth(d.slice(0, 7))}
+              getDayProps={(date) => ({
+                onClick: () => openDia(date),
+              })}
+              renderDay={(date) => {
+                const total = totals[date] ?? 0;
+                return (
+                  <Box>
+                    <div>{dayjs(date).date()}</div>
+                    {total > 0 && (
+                      <Badge
+                        size="xs"
+                        variant="filled"
+                        color="hsaGreen"
+                        fullWidth
+                        mt={2}
+                        px={0}
+                      >
+                        {total}h
+                      </Badge>
+                    )}
+                  </Box>
+                );
+              }}
+            />
+          </Card>
+        </Grid.Col>
+
+        <Grid.Col span={{ base: 12, md: 5 }}>
+          <Stack gap="lg">
+            <Card padding="lg">
+              <Text size="xs" c="dimmed" tt="uppercase" fw={600}>
+                Resumen del mes
+              </Text>
+              <Group mt="md" justify="space-between">
+                <Stack gap={2}>
+                  <Text size="sm" c="dimmed">
+                    Horas registradas
+                  </Text>
+                  <Text fw={700} fz={32} c="hsaGreen.7" lh={1}>
+                    {resumen.horas}
+                  </Text>
+                </Stack>
+                <Divider orientation="vertical" />
+                <Stack gap={2}>
+                  <Text size="sm" c="dimmed">
+                    Días con horas
+                  </Text>
+                  <Text fw={700} fz={32} c="hsaGreen.7" lh={1}>
+                    {resumen.dias}
+                  </Text>
+                </Stack>
+              </Group>
+            </Card>
+
+            <Card padding="lg">
+              <Text size="sm" fw={600} mb="xs">
+                Cómo registrar
+              </Text>
+              <Text size="sm" c="dimmed">
+                1. Selecciona el día en el calendario.
+              </Text>
+              <Text size="sm" c="dimmed">
+                2. Agrega uno o varios bloques de horas (inicio y fin).
+              </Text>
+              <Text size="sm" c="dimmed">
+                3. Guarda. Los días con horas muestran un indicador verde.
+              </Text>
+              <Divider my="sm" />
+              <Text size="xs" c="dimmed">
+                Los días de fin de semana y festivos se clasifican
+                automáticamente como recargos en el reporte.
+              </Text>
+            </Card>
+          </Stack>
+        </Grid.Col>
+      </Grid>
     </Stack>
   );
 }

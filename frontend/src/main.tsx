@@ -7,6 +7,7 @@ import { BrowserRouter } from 'react-router-dom';
 import '@mantine/core/styles.css';
 import '@mantine/dates/styles.css';
 import '@mantine/notifications/styles.css';
+import './styles/global.css';
 import { theme } from './theme/theme';
 import { AuthProvider } from './auth/AuthContext';
 import { RegistroModal } from './features/registro/RegistroModal';

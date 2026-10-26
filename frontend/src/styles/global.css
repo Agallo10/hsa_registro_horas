@@ -1,0 +1,86 @@
+:root {
+  --hsa-green-dark: #038c25;
+  --hsa-green: #1ba62f;
+  --hsa-lime: #afd918;
+  --hsa-yellow: #f2e205;
+  --hsa-bg: #f2f2f2;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  background-color: var(--hsa-bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Encabezado de tablas institucional (tono suave) */
+.hsa-table thead th {
+  background-color: #e8f6ec;
+  color: #025a1a;
+  font-weight: 600;
+  border-bottom: 2px solid #cfe9d6;
+}
+
+/* Encabezado de tabla del reporte (verde institucional) */
+.hsa-table-report thead th {
+  background-color: var(--hsa-green-dark);
+  color: #ffffff;
+  font-weight: 600;
+  border-bottom: none;
+}
+
+/* Grupos de columnas del reporte */
+.hsa-table-report thead th.group-ord {
+  background-color: #038c25;
+  color: #ffffff;
+}
+
+.hsa-table-report thead th.group-fest {
+  background-color: #f2e205;
+  color: #4d4800;
+}
+
+.hsa-table-report thead th.group-sep {
+  border-left: 2px solid rgba(0, 0, 0, 0.25);
+}
+
+.hsa-table-report tbody td.col-ord {
+  background-color: #f3fbf5;
+}
+
+.hsa-table-report tbody td.col-fest {
+  background-color: #fdfce8;
+}
+
+.hsa-table-report tbody td.group-sep {
+  border-left: 2px solid #e8f6ec;
+}
+
+.hsa-table-report tfoot td {
+  background-color: #e8f6ec;
+  color: #025a1a;
+  border-top: 2px solid #cfe9d6;
+}
+
+.hsa-row-clickable {
+  cursor: pointer;
+}
+
+.hsa-row-clickable:hover td {
+  background-color: #f3fbf5;
+}
+
+.hsa-brand-bar {
+  background: linear-gradient(135deg, #038c25 0%, #1ba62f 60%, #2fb34a 100%);
+}
+
+.hsa-login-bg {
+  background:
+    radial-gradient(circle at 15% 15%, rgba(175, 217, 24, 0.18), transparent 45%),
+    radial-gradient(circle at 85% 10%, rgba(3, 140, 37, 0.16), transparent 40%),
+    linear-gradient(160deg, #eef7f0 0%, #f2f2f2 55%);
+}

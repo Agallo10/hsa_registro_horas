@@ -2,8 +2,8 @@ import { useState } from 'react';
 import {
   ActionIcon,
   Alert,
+  Box,
   Button,
-  Divider,
   Group,
   Stack,
   Text,
@@ -163,8 +163,15 @@ export function RegistroModal({
       )}
 
       {blocks.map((block, index) => (
-        <div key={block.id ?? `nuevo-${index}`}>
-          {index > 0 && <Divider my="xs" />}
+        <Box
+          key={block.id ?? `nuevo-${index}`}
+          p="sm"
+          style={{
+            border: '1px solid #d0ecd8',
+            borderRadius: 10,
+            background: '#f7fcf8',
+          }}
+        >
           <Group align="flex-end" wrap="nowrap">
             <TimeInput
               label="Inicio"
@@ -207,7 +214,7 @@ export function RegistroModal({
               updateBlock(index, 'observaciones', e.currentTarget.value)
             }
           />
-        </div>
+        </Box>
       ))}
 
       <Button variant="light" onClick={addBlock}>
@@ -215,7 +222,7 @@ export function RegistroModal({
       </Button>
 
       <Group justify="space-between" mt="sm">
-        <Text size="sm" fw={600}>
+        <Text size="sm" fw={700} c="hsaGreen.7">
           Total: {total} h
         </Text>
         <Group gap="sm">

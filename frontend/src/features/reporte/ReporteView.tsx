@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
   Badge,
+  Box,
   Button,
   Group,
   Paper,
@@ -227,13 +228,28 @@ export function ReporteView() {
     descargar(await wb.xlsx.writeBuffer(), `detalle_${year}_${month}.xlsx`);
   };
 
-  const totalGeneral = filas.reduce((s, f) => s + f.totalHoras, 0);
+  const totales = filas.reduce(
+    (acc, f) => ({
+      ordD: acc.ordD + f.recargoOrdinarioDiurno,
+      ordN: acc.ordN + f.recargoOrdinarioNocturno,
+      festD: acc.festD + f.recargoFestivoDiurno,
+      festN: acc.festN + f.recargoFestivoNocturno,
+      extra: acc.extra + f.horasExtraordinarias,
+      total: acc.total + f.totalHoras,
+    }),
+    { ordD: 0, ordN: 0, festD: 0, festN: 0, extra: 0, total: 0 },
+  );
 
   return (
-    <Stack>
-      <Title order={2}>Reporte mensual</Title>
+    <Stack gap="lg">
+      <div>
+        <Title order={2}>Reporte mensual</Title>
+        <Text c="dimmed" size="sm">
+          Horas extras y recargos por persona, clasificados automáticamente.
+        </Text>
+      </div>
 
-      <Paper withBorder p="md">
+      <Paper withBorder p="md" radius="lg">
         <Group align="flex-end">
           <Select
             label="Año"
@@ -260,50 +276,103 @@ export function ReporteView() {
         </Group>
       </Paper>
 
-      <Paper withBorder p="md">
-        <Table.ScrollContainer minWidth={1100}>
-          <Table striped highlightOnHover>
+      <Paper withBorder p={0} radius="lg" style={{ overflow: 'hidden' }}>
+        <Box p="md" pb={0}>
+          <Group gap="lg" wrap="wrap">
+            <Group gap={6}>
+              <Box w={12} h={12} style={{ background: '#038C25', borderRadius: 3 }} />
+              <Text size="xs" c="dimmed">
+                Recargos ordinarios · sábado
+              </Text>
+            </Group>
+            <Group gap={6}>
+              <Box w={12} h={12} style={{ background: '#F2E205', borderRadius: 3 }} />
+              <Text size="xs" c="dimmed">
+                Recargos festivos · domingo / festivo
+              </Text>
+            </Group>
+            <Group gap={6}>
+              <Box
+                w={12}
+                h={12}
+                style={{
+                  background: '#e8f6ec',
+                  border: '1px solid #cfe9d6',
+                  borderRadius: 3,
+                }}
+              />
+              <Text size="xs" c="dimmed">
+                Horas extra · L-V después de las 16:00
+              </Text>
+            </Group>
+          </Group>
+        </Box>
+
+        <Table.ScrollContainer minWidth={1000}>
+          <Table className="hsa-table-report" highlightOnHover withTableBorder>
             <Table.Thead>
               <Table.Tr>
-                <Table.Th>Persona</Table.Th>
-                <Table.Th>Documento</Table.Th>
-                <Table.Th>Área</Table.Th>
-                <Table.Th>Días</Table.Th>
-                <Table.Th ta="center" colSpan={2}>
+                <Table.Th rowSpan={2}>Persona</Table.Th>
+                <Table.Th rowSpan={2}>Documento</Table.Th>
+                <Table.Th rowSpan={2}>Área</Table.Th>
+                <Table.Th rowSpan={2} ta="center">
+                  Días
+                </Table.Th>
+                <Table.Th colSpan={2} ta="center" className="group-ord">
                   Recargos ordinarios
                 </Table.Th>
-                <Table.Th ta="center" colSpan={2}>
+                <Table.Th
+                  colSpan={2}
+                  ta="center"
+                  className="group-fest group-sep"
+                >
                   Recargos festivos
                 </Table.Th>
-                <Table.Th>Extraordinarias</Table.Th>
-                <Table.Th ta="right">Total</Table.Th>
+                <Table.Th rowSpan={2} ta="center" className="group-sep">
+                  Horas extra
+                </Table.Th>
+                <Table.Th rowSpan={2} ta="right">
+                  Total (h)
+                </Table.Th>
               </Table.Tr>
               <Table.Tr>
-                <Table.Th />
-                <Table.Th />
-                <Table.Th />
-                <Table.Th />
-                <Table.Th>Diurno</Table.Th>
-                <Table.Th>Nocturno</Table.Th>
-                <Table.Th>Diurno</Table.Th>
-                <Table.Th>Nocturno</Table.Th>
-                <Table.Th />
-                <Table.Th />
+                <Table.Th ta="center" className="group-ord">
+                  Diurno
+                </Table.Th>
+                <Table.Th ta="center" className="group-ord">
+                  Nocturno
+                </Table.Th>
+                <Table.Th ta="center" className="group-fest group-sep">
+                  Diurno
+                </Table.Th>
+                <Table.Th ta="center" className="group-fest">
+                  Nocturno
+                </Table.Th>
               </Table.Tr>
             </Table.Thead>
             <Table.Tbody>
               {filas.map((f) => (
                 <Table.Tr key={f.personaId}>
-                  <Table.Td fw={500}>{f.nombre}</Table.Td>
+                  <Table.Td fw={600}>{f.nombre}</Table.Td>
                   <Table.Td>{f.documento}</Table.Td>
                   <Table.Td>{f.area ?? '—'}</Table.Td>
-                  <Table.Td>{f.diasRegistrados}</Table.Td>
-                  <Table.Td>{f.recargoOrdinarioDiurno}</Table.Td>
-                  <Table.Td>{f.recargoOrdinarioNocturno}</Table.Td>
-                  <Table.Td>{f.recargoFestivoDiurno}</Table.Td>
-                  <Table.Td>{f.recargoFestivoNocturno}</Table.Td>
-                  <Table.Td>{f.horasExtraordinarias}</Table.Td>
-                  <Table.Td ta="right" fw={600}>
+                  <Table.Td ta="center">{f.diasRegistrados}</Table.Td>
+                  <Table.Td ta="center" className="col-ord">
+                    {f.recargoOrdinarioDiurno}
+                  </Table.Td>
+                  <Table.Td ta="center" className="col-ord">
+                    {f.recargoOrdinarioNocturno}
+                  </Table.Td>
+                  <Table.Td ta="center" className="col-fest group-sep">
+                    {f.recargoFestivoDiurno}
+                  </Table.Td>
+                  <Table.Td ta="center" className="col-fest">
+                    {f.recargoFestivoNocturno}
+                  </Table.Td>
+                  <Table.Td ta="center" className="group-sep">
+                    {f.horasExtraordinarias}
+                  </Table.Td>
+                  <Table.Td ta="right" fw={700} c="hsaGreen.7">
                     {f.totalHoras}
                   </Table.Td>
                 </Table.Tr>
@@ -311,18 +380,46 @@ export function ReporteView() {
               {filas.length === 0 && (
                 <Table.Tr>
                   <Table.Td colSpan={10}>
-                    <Text c="dimmed" ta="center">
+                    <Text c="dimmed" ta="center" py="md">
                       Sin personas registradas.
                     </Text>
                   </Table.Td>
                 </Table.Tr>
               )}
             </Table.Tbody>
+            {filas.length > 0 && (
+              <Table.Tfoot>
+                <Table.Tr>
+                  <Table.Td colSpan={4} fw={700}>
+                    Totales
+                  </Table.Td>
+                  <Table.Td ta="center" fw={700}>
+                    {totales.ordD}
+                  </Table.Td>
+                  <Table.Td ta="center" fw={700}>
+                    {totales.ordN}
+                  </Table.Td>
+                  <Table.Td ta="center" fw={700}>
+                    {totales.festD}
+                  </Table.Td>
+                  <Table.Td ta="center" fw={700}>
+                    {totales.festN}
+                  </Table.Td>
+                  <Table.Td ta="center" fw={700}>
+                    {totales.extra}
+                  </Table.Td>
+                  <Table.Td ta="right" fw={700}>
+                    {totales.total}
+                  </Table.Td>
+                </Table.Tr>
+              </Table.Tfoot>
+            )}
           </Table>
         </Table.ScrollContainer>
-        <Group justify="flex-end" mt="md">
-          <Badge size="lg" variant="light">
-            Total general: {totalGeneral} h
+
+        <Group justify="flex-end" p="md" style={{ borderTop: '1px solid #e8f6ec' }}>
+          <Badge size="lg" variant="light" color="hsaGreen">
+            Total general: {totales.total} h
           </Badge>
         </Group>
       </Paper>
