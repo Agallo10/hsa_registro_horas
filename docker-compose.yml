@@ -1,0 +1,63 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-registro}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-registro}
+      POSTGRES_DB: ${POSTGRES_DB:-registro_horas}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'pg_isready -U ${POSTGRES_USER:-registro} -d ${POSTGRES_DB:-registro_horas}',
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: ${BACKEND_PORT:-3000}
+      DATABASE_HOST: db
+      DATABASE_PORT: 5432
+      DATABASE_USER: ${POSTGRES_USER:-registro}
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD:-registro}
+      DATABASE_NAME: ${POSTGRES_DB:-registro_horas}
+      DB_SYNCHRONIZE: 'false'
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-cambia-este-secreto-access}
+      JWT_ACCESS_TTL: ${JWT_ACCESS_TTL:-15m}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-cambia-este-secreto-refresh}
+      JWT_REFRESH_TTL: ${JWT_REFRESH_TTL:-7d}
+      CORS_ORIGIN: ${CORS_ORIGIN:-}
+    depends_on:
+      db:
+        condition: service_healthy
+    # Exponer el backend directamente al host (opcional, para depurar):
+    # ports:
+    #   - "${BACKEND_PORT:-3000}:${BACKEND_PORT:-3000}"
+
+  frontend:
+    build:
+      context: ./frontend
+    restart: unless-stopped
+    environment:
+      # Puerto en el que escucha nginx dentro del contenedor
+      FRONTEND_PORT: ${FRONTEND_PORT:-81}
+      # A dónde reenvía nginx las peticiones /api
+      BACKEND_URL: http://backend:${BACKEND_PORT:-3000}
+      # URL base de la API que consume la SPA
+      API_URL: ${API_URL:-/api}
+    ports:
+      - '${FRONTEND_PORT:-81}:${FRONTEND_PORT:-81}'
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:

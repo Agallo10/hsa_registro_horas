@@ -62,8 +62,8 @@ El trabajo se organiza mediante Spec-Driven Development (Spec Kit).
 ## Development Workflow
 
 - Stack: NestJS + TypeORM + PostgreSQL (backend); React + Vite + TypeScript + Mantine (frontend).
-- Despliegue objetivo: IIS (Windows Server) con `iisnode` + URL Rewrite; el backend sirve el build
-  estático del frontend mediante `@nestjs/serve-static`.
+- Despliegue objetivo: Docker + Docker Compose (nginx sirve la SPA y hace proxy de `/api`
+  hacia el backend NestJS; PostgreSQL como servicio de base de datos).
 - Flujo Spec Kit: `/speckit.constitution` → `/speckit.specify` → `/speckit.plan` → `/speckit.tasks` → `/speckit.implement`.
 - Antes de dar por terminada una tarea: lint + typecheck + pruebas relevantes pasan.
 

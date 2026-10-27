@@ -2,8 +2,6 @@ import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ServeStaticModule } from '@nestjs/serve-static';
-import { join } from 'node:path';
 import { AuthModule } from './auth/auth.module.js';
 import { UsersModule } from './users/users.module.js';
 import { PersonasModule } from './personas/personas.module.js';
@@ -35,10 +33,6 @@ import { RolesGuard } from './common/guards/roles.guard.js';
           migrations: ['dist/migrations/*.js'],
         };
       },
-    }),
-    ServeStaticModule.forRoot({
-      rootPath: join(process.cwd(), 'frontend', 'dist'),
-      exclude: ['/api/{*path}'],
     }),
     AuthModule,
     UsersModule,

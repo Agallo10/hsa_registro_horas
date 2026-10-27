@@ -7,7 +7,7 @@
 Sistema web para que el supervisor de un hospital registre las horas diarias de las
 personas (facturadores) y genere un reporte mensual exportable. Backend NestJS + TypeORM
 + PostgreSQL, frontend React + Mantine, autenticación JWT de un único usuario
-(`administrador`), despliegue en IIS (iisnode + ServeStatic).
+(`administrador`), despliegue con Docker + Docker Compose (nginx + Node + PostgreSQL).
 
 ## Technical Context
 
@@ -15,7 +15,7 @@ personas (facturadores) y genere un reporte mensual exportable. Backend NestJS +
 **Primary Dependencies**: NestJS 12, TypeORM 1.x, passport-jwt, bcrypt, class-validator; React 19, Mantine ^8.3, axios, exceljs
 **Storage**: PostgreSQL 18 (Postgres.app local; SQL Server no requerido)
 **Testing**: Vitest (unit) + supertest (e2e)
-**Target Platform**: Windows Server + IIS (desarrollo en macOS)
+**Target Platform**: Docker (desarrollo en macOS/Linux)
 **Project Type**: web (backend API + SPA)
 **Constraints**: sin cruce de medianoche; horas en decimal
 **Scale/Scope**: decenas de facturadores; ~2 registros/día/usuario
@@ -46,7 +46,7 @@ hsa_registro_horas/
 2. Backend: config, entidades, migraciones, seed.
 3. Backend: auth → users → registros → reportes.
 4. Frontend: config, tema, api, auth → calendario → modal → reporte/export.
-5. Build producción + IIS (`web.config`, `iisnode`) + README.
+5. Build producción + Docker (Dockerfiles, `docker-compose.yml`) + README.
 6. Verificación: lint + typecheck + build + tests.
 
 ## Complexity Tracking

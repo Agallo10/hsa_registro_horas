@@ -3,6 +3,7 @@ import axios, {
   type AxiosInstance,
   type InternalAxiosRequestConfig,
 } from 'axios';
+import { getApiUrl } from '../config';
 
 const ACCESS_KEY = 'hsa_access';
 const REFRESH_KEY = 'hsa_refresh';
@@ -21,7 +22,7 @@ export const tokenStore = {
 };
 
 export const api: AxiosInstance = axios.create({
-  baseURL: '/api',
+  baseURL: getApiUrl(),
 });
 
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
@@ -39,7 +40,9 @@ async function doRefresh(): Promise<string> {
   if (!refreshToken) {
     throw new Error('Sin refresh token');
   }
-  const { data } = await axios.post('/api/auth/refresh', { refreshToken });
+  const { data } = await axios.post(`${getApiUrl()}/auth/refresh`, {
+    refreshToken,
+  });
   tokenStore.set(data.accessToken, data.refreshToken);
   return data.accessToken;
 }

@@ -27,8 +27,9 @@
 
 ## Fase 5 — Despliegue
 - [x] Build producción backend y frontend.
-- [x] `web.config` (iisnode) + `ServeStaticModule` (SPA fallback).
-- [x] README con instalación y despliegue IIS.
+- [x] Dockerfiles (backend Node, frontend nginx) + `docker-compose.yml` (db + backend + frontend).
+- [x] Frontend con configuración runtime por env (`config.js`, `API_URL`, `FRONTEND_PORT`).
+- [x] README con instalación y despliegue Docker.
 
 ## Fase 6 — Verificación
 - [x] Backend: `lint` + `typecheck` + `test` + `build`.

@@ -28,9 +28,9 @@ Resultados de consultar documentación actualizada vía Context7 (2026-09-22).
 - Decorators `@Public()` y `@Roles(...)`; `passport-jwt` para la estrategia.
 - JWT access + refresh firmados con secretos distintos y TTL configurables.
 
-## Despliegue IIS (Windows Server)
+## Despliegue con Docker
 
-- Backend compilado a `dist/`, servido con `iisnode` + `web.config` (URL Rewrite).
-- `@nestjs/serve-static` sirve el build del frontend (`frontend/dist`) desde el mismo sitio,
-  evitando CORS y un segundo host en producción.
-- App pool "No Managed Code"; `web.config` define `iisnode` como handler y reescritura a `dist/main.js`.
+- Tres servicios: `db` (PostgreSQL), `backend` (NestJS en Node) y `frontend` (nginx + SPA).
+- nginx sirve la SPA y hace proxy de `/api` → `http://backend:${BACKEND_PORT}`, evitando CORS.
+- El frontend recibe configuración en tiempo de ejecución (`config.js`) con `API_URL`.
+- Puertos configurables por `.env`: `FRONTEND_PORT` (nginx) y `BACKEND_PORT` (API).

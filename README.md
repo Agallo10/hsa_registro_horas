@@ -8,7 +8,7 @@ persona (facturador/a) y genere un reporte mensual consolidado, exportable a Exc
 - **Backend**: NestJS 12 + TypeORM + PostgreSQL (JWT access + refresh)
 - **Frontend**: React + Vite + Mantine (`@mantine/core`, `@mantine/dates`, `@mantine/modals`)
 - **Exportación**: `exceljs` (Excel en el cliente)
-- **Despliegue**: IIS (Windows Server) con `iisnode` + `@nestjs/serve-static`
+- **Despliegue**: Docker + Docker Compose (nginx para el frontend, Node para el backend, PostgreSQL)
 
 ## Modelo de uso
 
@@ -37,16 +37,18 @@ persona (facturador/a) y genere un reporte mensual consolidado, exportable a Exc
 
 ```
 hsa_registro_horas/
-├── backend/            API NestJS (+ web.config para IIS)
-├── frontend/           SPA React + Mantine
+├── backend/            API NestJS (+ Dockerfile)
+├── frontend/           SPA React + Mantine (+ Dockerfile, nginx)
+├── docker-compose.yml  db + backend + frontend
 ├── specs/001-registro-horas/   Especificación (Spec Kit)
 └── .specify/           Constitución y flujo Spec Kit
 ```
 
 ## Requisitos
 
-- Node.js ≥ 20 (probado con Node 25)
-- PostgreSQL ≥ 14 (probado con PostgreSQL 18 / Postgres.app)
+- Node.js ≥ 20 (probado con Node 25) — solo para desarrollo
+- PostgreSQL ≥ 14 (probado con PostgreSQL 18 / Postgres.app) — o Docker
+- Docker + Docker Compose (para despliegue)
 
 ## Desarrollo local
 
@@ -62,7 +64,7 @@ createdb registro_horas
 cd backend
 npm install
 cp .env.example .env      # ajustar DATABASE_*, JWT_* si hace falta
-npm run seed              # crea el administrador y un facturador de prueba
+npm run seed              # crea el supervisor y personas de prueba
 npm run start:dev         # http://localhost:3000/api
 ```
 
@@ -77,8 +79,21 @@ Credencial inicial (cámbiala tras el primer acceso):
 ```bash
 cd frontend
 npm install
-npm run dev               # http://localhost:5173 (proxy /api -> :3000)
+cp .env.example .env      # opcional: VITE_PORT, VITE_BACKEND_URL
+npm run dev               # http://localhost:5173 (proxy /api -> backend)
 ```
+
+Variables de entorno del frontend en desarrollo (`frontend/.env`):
+
+| Variable | Default | Descripción |
+|---|---|---|
+| `VITE_PORT` | `5173` | Puerto del servidor de desarrollo (Vite) |
+| `VITE_BACKEND_URL` | `http://localhost:3000` | Destino del proxy `/api` |
+| `VITE_API_URL` | (vacío) | URL base de la API si se quiere fijar en build |
+
+> `frontend/.env` es **solo para desarrollo**. En Docker no se usa: la configuración del
+> frontend viene de `docker-compose.yml` (`FRONTEND_PORT`, `BACKEND_URL`, `API_URL`) y se
+> inyecta en runtime mediante `config.js`.
 
 ## Migraciones
 
@@ -141,68 +156,74 @@ cd backend  && npm run build       # -> dist/
 cd frontend && npm run build       # -> frontend/dist/
 ```
 
-## Despliegue en IIS (Windows Server)
+## Despliegue con Docker
 
-### Requisitos en el servidor
+Arquitectura: **nginx** sirve la SPA y hace proxy de `/api` → **backend** (NestJS) →
+**db** (PostgreSQL). Todo en una red interna de Compose; solo el frontend se publica al host.
 
-1. Instalar **Node.js LTS**.
-2. Instalar **iisnode** (https://github.com/Azure/iisnode) y el módulo **URL Rewrite**
-   de IIS (https://www.iis.net/downloads/microsoft/url-rewrite).
-3. Crear un **Application Pool** con `.NET CLR Version` = **No Managed Code**.
+### 1. Configuración
 
-### Pasos
+```bash
+cp .env.example .env
+# editar .env: contraseñas de PostgreSQL, secretos JWT y puertos
+```
 
-1. Crear la carpeta del sitio, por ejemplo `C:\inetpub\registro-horas`.
-2. Copiar el backend:
-   - `backend/package.json`, `backend/web.config`, `backend/dist/`, `backend/.env.example`.
-   - `npm install --omit=dev` dentro de esa carpeta (genera `node_modules`).
-3. Copiar el build del frontend en `frontend/dist/` (el backend lo sirve con
-   `@nestjs/serve-static`):
-   ```
-   C:\inetpub\registro-horas\
-   ├── web.config
-   ├── package.json
-   ├── node_modules\
-   ├── dist\main.js
-   ├── dist\migrations\
-   └── frontend\dist\index.html
-   ```
-4. Crear `.env` en la raíz con la configuración de producción:
+`.env` (raíz) controla los puertos y la conexión:
 
-   ```env
-   NODE_ENV=production
-   DATABASE_HOST=localhost
-   DATABASE_PORT=5432
-   DATABASE_USER=...
-   DATABASE_PASSWORD=...
-   DATABASE_NAME=registro_horas
-   DB_SYNCHRONIZE=false
-   JWT_ACCESS_SECRET=<secreto-largo>
-   JWT_ACCESS_TTL=15m
-   JWT_REFRESH_SECRET=<secreto-largo>
-   JWT_REFRESH_TTL=7d
-   ```
+| Variable | Default | Descripción |
+|---|---|---|
+| `FRONTEND_PORT` | `81` | Puerto del frontend (nginx lo escucha y se publica al host) |
+| `BACKEND_PORT` | `3000` | Puerto interno del backend (nginx enruta `/api` aquí) |
+| `API_URL` | `/api` | URL que consume la SPA. `/api` usa el proxy de nginx |
+| `POSTGRES_*` | `registro` | Credenciales de PostgreSQL |
+| `JWT_*` | — | Secretos y TTL de los tokens |
 
-5. En IIS: **Agregar sitio** apuntando a `C:\inetpub\registro-horas`, puerto 80/443,
-   y asociarlo al Application Pool creado (No Managed Code).
-6. Asegurar que la cuenta del pool tenga permiso de escritura sobre la carpeta del sitio
-   (iisnode escribe logs) y sobre la carpeta de logs (`iisnode/`).
-7. Aplicar migraciones una vez antes de arrancar (o dejar `migrationsRun` en producción):
+### 2. Levantar
 
-   ```bash
-   npm run migration:run
-   npm run seed
-   ```
+```bash
+docker compose up -d --build
+```
 
-   Con `DB_SYNCHRONIZE=false`, el backend ejecuta automáticamente las migraciones pendientes
-   al arrancar (`migrationsRun: true`).
+- Frontend: `http://localhost:${FRONTEND_PORT}` (por defecto `http://localhost:81`).
+- El backend **no** se publica al host; nginx lo alcanza por `http://backend:${BACKEND_PORT}`.
 
-### Notas de iisnode
+### 3. Base de datos y usuario inicial
 
-- `web.config` reescribe todo el tráfico a `dist/main.js`. El backend sirve la SPA en `/`
-  y la API en `/api/*` (excluida del estático).
-- iisnode asigna `process.env.PORT` a una named pipe; `main.ts` lo respeta (no fuerza
-  puerto numérico), por lo que **no** debes fijar `PORT` en el `.env` de producción.
+En producción `DB_SYNCHRONIZE=false`: el backend aplica las migraciones automáticamente al
+arrancar. Para crear el supervisor inicial, ejecutar el seed una vez:
+
+```bash
+docker compose exec backend node dist/seed.js
+```
+
+Credencial inicial (cámbiala tras el primer acceso):
+
+| Correo | Contraseña | Rol |
+|--------|------------|-----|
+| `admin@hospital.local` | `admin123` | administrador (supervisor) |
+
+### 4. Cambiar puertos
+
+- **Puerto del frontend**: cambia `FRONTEND_PORT` en `.env` y `docker compose up -d`.
+- **Puerto del backend**: cambia `BACKEND_PORT` en `.env`; nginx ajusta el proxy
+  (`BACKEND_URL`) automáticamente vía `http://backend:${BACKEND_PORT}`.
+
+### 5. API en otro host (opcional)
+
+Si el frontend debe llamar a una API externa en lugar de usar el proxy de nginx:
+
+1. Define `API_URL=http://mi-host:3000/api` en `.env` (se inyecta en tiempo de ejecución
+   mediante `config.js`).
+2. Define `CORS_ORIGIN=https://mi-frontend` en el backend para permitir el origen.
+
+### Comandos útiles
+
+```bash
+docker compose logs -f backend     # logs del API
+docker compose exec backend node dist/seed.js   # seed inicial
+docker compose down                # detener (conserva el volumen de datos)
+docker compose down -v             # detener y borrar la base de datos
+```
 
 ## Notas de seguridad
 

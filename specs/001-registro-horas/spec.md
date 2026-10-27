@@ -114,4 +114,4 @@ Puede exportar a Excel un resumen (una fila por persona) o un detalle día por d
 - Solo el rol `administrador` (supervisor) inicia sesión; puede ampliarse en el futuro.
 - El login usa `correo` como identificador del usuario.
 - `horas_totales` en horas decimales; sin cruce de medianoche.
-- Despliegue objetivo: IIS (iisnode + ServeStatic).
+- Despliegue objetivo: Docker + Docker Compose (nginx + Node + PostgreSQL).

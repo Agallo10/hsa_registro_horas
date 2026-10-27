@@ -20,8 +20,7 @@ async function bootstrap() {
 
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
 
-  // iisnode expone process.env.PORT como named pipe (ej. \\.\pipe\...);
-  // por eso no se coerce a Number y se prefiere process.env.PORT.
+  // Puerto configurable por variable de entorno (Docker usa PORT).
   const port = process.env.PORT ?? config.get<string>('PORT') ?? '3000';
   await app.listen(port);
 }
